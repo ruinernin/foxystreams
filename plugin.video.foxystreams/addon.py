@@ -61,7 +61,7 @@ def refresh_token():
     xbmc.log(str(expires), xbmc.LOGERROR)
     now = time.time()
     if now < int(expires):
-        return
+        return addon.getSetting('rd_token')
     client_id = addon.getSetting('rd_clientid')
     client_secret = addon.getSetting('rd_clientsecret')
     code = addon.getSetting('rd_code')
@@ -69,9 +69,10 @@ def refresh_token():
     expires = now + token['expires_in']
     addon.setSetting('rd_code', token['refresh_token'])
     addon.setSetting('rd_token', token['access_token'])
+    return token['access_token']
 
-refresh_token()
-rd.RD_KEY['auth_token'] = addon.getSetting('rd_token')
+token = refresh_token()
+rd.RD_KEY['auth_token'] = token
 
 def torrentapi_req(**kwargs):
     api_url = 'https://torrentapi.org/pubapi_v2.php'
