@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <setting type="text" id="torapikey" label="torapikey" />
+    <setting type="text" id="rd_clientid" label="rd_clientid" />
+    <setting type="text" id="rd_clientsecret" label="rd_clientsecret" />
+    <setting type="text" id="rd_code" label="rd_code" />
+    <setting type="text" id="rd_token" label="rd_token" />
+    <setting type="text" id="rd_expires" label="rd_expires" default="0"/>
+    <setting type="bool" id="rd_authed" label="rd_authed" default="false"/>
+    <setting type="action" label="AuthRD" action="RunPlugin(plugin://plugin.video.foxystreams?mode=auth)"/>
+</settings>
