@@ -133,16 +133,18 @@ elif mode == 'downloads':
 
 elif mode in ['list', 'search', 'imdb']:
     sstring = None
+    category = addon.getSetting('search_category')
+    ranked = int(addon.getSettingBool('search_ranked'))
     if mode == 'list':
-        torrents = torrentapi_req(mode='list', category='52;51')['torrent_results']
+        torrents = torrentapi_req(mode='list', category=category, ranked=ranked)['torrent_results']
     if mode == 'search':
         if not args.get('search'):
             sstring = search_dialog()
         else:
             sstring = args['search']
-        torrents = torrentapi_req(mode='search', category='52;51', search_string=sstring)['torrent_results']
+        torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
     if mode == 'imdb':
-        torrents = torrentapi_req(mode='search', category='52;51', search_imdb=args['search'])['torrent_results']
+        torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
     caches = rd.check_rd_availability([tor['download'] for tor in torrents])
     names_urls = []
     for torrent, cache in zip(torrents, caches):
