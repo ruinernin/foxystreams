@@ -12,6 +12,16 @@ import rd
 searches = [
 ]
 
+rarbg_categories = {
+    '4kx265hdr': '52',
+    '4kx265': '51',
+    '4kx264': '50',
+    '720x264': '45',
+    '1080x264': '44',
+    'sdx264': '17',
+    'XXX': '4',
+}
+
 base_url = sys.argv[0]
 xbmc.log(base_url,xbmc.LOGERROR)
 addon_handle = int(sys.argv[1])
@@ -132,8 +142,12 @@ elif mode == 'downloads':
     xbmcplugin.endOfDirectory(addon_handle)
 
 elif mode in ['list', 'search', 'imdb']:
+    cats = []
+    for name, cat_id in rarbg_categories.iteritems():
+        if addon.getSettingBool(name):
+            cats.append(cat_id)
     sstring = None
-    category = addon.getSetting('search_category')
+    category = ';'.join(cats)
     ranked = int(addon.getSettingBool('search_ranked'))
     if mode == 'list':
         torrents = torrentapi_req(mode='list', category=category, ranked=ranked)['torrent_results']
