@@ -8,7 +8,6 @@
         <setting type="bool" id="4kx265hdr" label="4k HDR x265" default="true"/>
         <setting type="bool" id="4kx265" label="4k x265" default="true"/>
         <setting type="bool" id="4kx264" label="4k x264" default="false"/>
-        <setting type="bool" id="4kx264" label="4k x264" default="false"/>
         <setting type="bool" id="1080x264" label="1080p x264" default="false"/>
         <setting type="bool" id="720x264" label="720p x264" default="false"/>
         <setting type="bool" id="sdx264" label="SD x264" default="false"/>
