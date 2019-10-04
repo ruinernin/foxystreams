@@ -13,6 +13,9 @@
         <setting type="bool" id="1080x264" label="1080p x264" default="false"/>
         <setting type="bool" id="720x264" label="720p x264" default="false"/>
         <setting type="bool" id="sdx264" label="SD x264" default="false"/>
+        <setting type="bool" id="tvuhd" label="TV UHD" default="false"/>
+        <setting type="bool" id="tvhd" label="TV HD" default="false"/>
+        <setting type="bool" id="tvsd" label="TV SD" default="false"/>
         <setting type="bool" id="XXX" label="XXX" default="false"/>
     </category>
     <category label="BTS">

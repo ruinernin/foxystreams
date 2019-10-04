@@ -51,12 +51,11 @@ def get_largest_file(content):
 
 def resolveUrl(handle, magnet, _):
     dls = pm_directdl(magnet)
-    xbmc.log(str(dls), xbmc.LOGERROR)
     link = get_largest_file(dls['content'])
     li = xbmcgui.ListItem(path=link)
     xbmcplugin.setResolvedUrl(handle, True, listitem=li)
 
-def check_availability(magnets, chunks=5):
+def check_availability(magnets, chunks=5, tv=None):
     hashes = map(extract_hash, magnets)
     cached = []
     for i in range(0, len(hashes), chunks):
@@ -64,7 +63,7 @@ def check_availability(magnets, chunks=5):
         cached.extend(pm_availability(*chunk)['response'])
     return cached
 
-def grab_torrent(magnet):
+def grab_torrent(magnet, tv=None):
     result = pm_create(magnet)
     if result.get('status') == 'success':
         return True

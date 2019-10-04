@@ -9,6 +9,8 @@ OAUTH_URL = 'https://api.real-debrid.com/oauth/v2'
 RD_KEY = {'auth_token': None}
 CLIENT_ID = 'X245A4XAIBGVM'
 GRANT_TYPE = 'http://oauth.net/grant_type/device/1.0'
+EP_STRS = ('s{0:02d}e{1:02d}',
+           '{0:d}x{1:02d}')
 
 def rd_code(client_id=CLIENT_ID):
     params = {
@@ -34,7 +36,6 @@ def rd_token(code, client_id, client_secret):
     return requests.post(OAUTH_URL + '/token', data=data).json()
 
 def rd_api_get(path):
-    xbmc.log(path + str(RD_KEY), xbmc.LOGERROR)
     return requests.get(RD_URL + path, params=RD_KEY)
 
 def rd_api_post(path, **kwargs):
@@ -79,15 +80,34 @@ def extract_hash(magnet):
     sha1 = exact_topic.split(':')[-1]
     return sha1
 
-def get_single_fileid(varients):
+def get_single_fileid(varients, tv=None):
     single_file_varients = filter(lambda x: len(x.keys()) == 1, varients)
     if len(single_file_varients) == 0:
         return None
     else:
+        if tv:
+            for ep_str in EP_STRS:
+                ep_str = ep_str.format(*tv)
+                tmp_varients = filter(lambda x: ep_str in x.values()[0]['filename'].lower(), single_file_varients)
+                if tmp_varients:
+                    break
+            else:
+                return None
+            single_file_varients = tmp_varients
+        if not single_file_varients:
+            return None
         return max(single_file_varients,
                    key=lambda x: x.values()[0]['filesize']).keys()[0]
 
-def check_availability(magnets, chunks=5):
+def get_select_file(files, tv=None):
+    for ep_str in EP_STRS:
+        ep_str = ep_str.format(*tv)
+        potentials = filter(lambda x: ep_str in x['path'].lower(), files)
+        if potentials:
+            break
+    return potentials
+
+def check_availability(magnets, chunks=5, tv=None):
     hashes = map(extract_hash, magnets)
     all_results = {}
     for i in range(0, len(hashes), chunks):
@@ -99,9 +119,8 @@ def check_availability(magnets, chunks=5):
         if not result:
             cached_fileids.append(None)
             continue
-        #xbmc.log(str(all_results),xbmc.LOGERROR)
         varients = result['rd']
-        cached_fileids.append(get_single_fileid(varients))
+        cached_fileids.append(get_single_fileid(varients, tv=tv))
     return cached_fileids
 
 def resolveUrl(handle, magnet, fid):
@@ -120,7 +139,7 @@ def resolveLink(handle, link):
     li = xbmcgui.ListItem(path=link)
     xbmcplugin.setResolvedUrl(handle, True, listitem=li)
 
-def grab_torrent(magnet):
+def grab_torrent(magnet, tv=None):
     tor_id = rd_addmagnet(magnet)['id']
     info = rd_torrentinfo(tor_id)
     tries = 0
@@ -132,7 +151,10 @@ def grab_torrent(magnet):
         info = rd_torrentinfo(tor_id)
         if 'error' in info['status']:
             return
-    files = sorted(info['files'], key=lambda x: x['bytes'])
+    files = info['files']
+    if tv:
+        files = get_select_file(files, tv=tv)
+    files = sorted(files, key=lambda x: x['bytes'])
     rd_selectfiles(tor_id, [str(files[-1]['id'])])
     return True
 
