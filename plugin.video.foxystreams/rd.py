@@ -135,3 +135,18 @@ def grab_torrent(magnet):
     files = sorted(info['files'], key=lambda x: x['bytes'])
     rd_selectfiles(tor_id, [str(files[-1]['id'])])
     return True
+
+def downloads():
+    torrents = rd_torrents()
+    results = []
+    for torrent in torrents:
+        if torrent['status'] == 'downloaded':
+            cached = True
+            name = torrent['filename']
+            url = rd_unrestrict(torrent['links'][0])['download']
+        else:
+            cached = False
+            name = '['+str(torrent['progress'])+'%] ' + torrent['filename']
+            url = ''
+        results.append((cached, name, url))
+    return results

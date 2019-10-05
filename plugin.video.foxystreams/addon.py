@@ -8,6 +8,7 @@ import sys
 import time
 import ui
 import rd
+import pm
 
 searches = [
 ]
@@ -83,6 +84,13 @@ def refresh_token():
 
 token = refresh_token()
 rd.RD_KEY['auth_token'] = token
+pm.PM_KEY['apikey'] = addon.getSetting('pm_key')
+
+provider = addon.getSetting('debrid_provider')
+if provider == 'pm':
+    debrid = pm
+elif provider == 'rd':
+    debrid = rd
 
 def torrentapi_req(**kwargs):
     api_url = 'https://torrentapi.org/pubapi_v2.php'
@@ -126,18 +134,17 @@ elif mode == 'auth':
     authenticate()
 
 elif mode == 'downloads':
-    torrents = rd.rd_torrents()
-    for torrent in torrents:
-        if torrent['status'] == 'downloaded':
-            url = build_url(mode='cached', link=torrent['links'][0])
-            li = xbmcgui.ListItem('[COLOR green]' + torrent['filename'] + '[/COLOR]')
+    torrents = debrid.downloads()
+    for cached, name, url in torrents:
+        if cached:
+            li = xbmcgui.ListItem('[COLOR green]' + name + '[/COLOR]')
             li.setProperty('IsPlayable', 'true')
-            li.setInfo('video', {'title': torrent['filename'],
+            li.setInfo('video', {'title': name,
                                  'mediatype': 'video',})
             xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
         else:
             url = build_url(mode='noop')
-            li = xbmcgui.ListItem('[COLOR red][' + str(torrent['progress']) + '%] ' + torrent['filename'] + '[/COLOR]')
+            li = xbmcgui.ListItem('[COLOR red]'+name+'[/COLOR]')
             xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
     xbmcplugin.endOfDirectory(addon_handle)
 
@@ -159,12 +166,12 @@ elif mode in ['list', 'search', 'imdb']:
         torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
     if mode == 'imdb':
         torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
-    caches = rd.check_rd_availability([tor['download'] for tor in torrents])
+    caches = debrid.check_pm_availability([tor['download'] for tor in torrents])
     names_urls = []
     for torrent, cache in zip(torrents, caches):
         if cache:
             names_urls.append(('[COLOR green]' + torrent['filename'] + '[/COLOR]',
-                               build_url(mode='vid', magnet=torrent['download'], fid=cache)))
+                               build_url(mode='vid', magnet=torrent['download'])))
         else:
             names_urls.append(('[COLOR red]' + torrent['filename'] + '[/COLOR]',
                                build_url(mode='tor', magnet=torrent['download'])))
@@ -176,11 +183,11 @@ elif mode in ['list', 'search', 'imdb']:
             torrent = torrents[selected]
             cache = caches[selected]
             if cache:
-                rd.resolveUrl(addon_handle, torrent['download'], cache)
+                debrid.resolveUrl(addon_handle, torrent['download'])
             else:
                 failed = True
                 grab_torrent(torrent['download'])
-                xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to RD)')
+                xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to Debrid)')
         else:
             failed = True
         if failed:
@@ -189,15 +196,12 @@ elif mode in ['list', 'search', 'imdb']:
     else:
         ui.directory_view(addon_handle, names_urls, videos=True)
 
-elif mode == 'cached':
-    rd.resolveLink(addon_handle, args['link'])
-
 elif mode == 'vid':
-    rd.resolveUrl(addon_handle, args['magnet'], args['fid'])
+    debrid.resolveUrl(addon_handle, args['magnet'])
 
 elif mode == 'tor':
-    status = rd.grab_torrent(args['magnet'])
+    status = debrid.grab_torrent(args['magnet'])
     if status:
-        xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to RD)')
+        xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to Debrid)')
     else:
         xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')

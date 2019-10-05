@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="General">
+        <setting type="select" id="debrid_provider" label="Debrid Provider" values="rd|pm"/>
         <setting type="action" label="AuthRD" action="RunPlugin(plugin://plugin.video.foxystreams?mode=auth)"/>
         <setting type="bool" id="search_ranked" label="ranked releases" default="true"/>
+        <setting type="text" id="pm_key" label="PM API Key" />
     </category>
     <category label="Search categories">
         <setting type="bool" id="4kx265hdr" label="4k HDR x265" default="true"/>
