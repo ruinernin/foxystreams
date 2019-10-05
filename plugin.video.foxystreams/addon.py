@@ -166,12 +166,12 @@ elif mode in ['list', 'search', 'imdb']:
         torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
     if mode == 'imdb':
         torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
-    caches = debrid.check_pm_availability([tor['download'] for tor in torrents])
+    caches = debrid.check_availability([tor['download'] for tor in torrents])
     names_urls = []
     for torrent, cache in zip(torrents, caches):
         if cache:
             names_urls.append(('[COLOR green]' + torrent['filename'] + '[/COLOR]',
-                               build_url(mode='vid', magnet=torrent['download'])))
+                               build_url(mode='vid', magnet=torrent['download'], cache=cache)))
         else:
             names_urls.append(('[COLOR red]' + torrent['filename'] + '[/COLOR]',
                                build_url(mode='tor', magnet=torrent['download'])))
@@ -183,7 +183,7 @@ elif mode in ['list', 'search', 'imdb']:
             torrent = torrents[selected]
             cache = caches[selected]
             if cache:
-                debrid.resolveUrl(addon_handle, torrent['download'])
+                debrid.resolveUrl(addon_handle, torrent['download'], cache)
             else:
                 failed = True
                 grab_torrent(torrent['download'])
@@ -197,7 +197,7 @@ elif mode in ['list', 'search', 'imdb']:
         ui.directory_view(addon_handle, names_urls, videos=True)
 
 elif mode == 'vid':
-    debrid.resolveUrl(addon_handle, args['magnet'])
+    debrid.resolveUrl(addon_handle, args['magnet'], args['cache'])
 
 elif mode == 'tor':
     status = debrid.grab_torrent(args['magnet'])

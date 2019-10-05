@@ -87,7 +87,7 @@ def get_single_fileid(varients):
         return max(single_file_varients,
                    key=lambda x: x.values()[0]['filesize']).keys()[0]
 
-def check_rd_availability(magnets, chunks=5):
+def check_availability(magnets, chunks=5):
     hashes = map(extract_hash, magnets)
     all_results = {}
     for i in range(0, len(hashes), chunks):
