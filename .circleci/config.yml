@@ -1,0 +1,10 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:2
+    steps:
+      - checkout
+      - run: zip -Xr plugin.video.foxystreams.zip plugin.video.foxystreams
+      - store_artifacts:
+          path: plugin.video.foxystreams.zip
