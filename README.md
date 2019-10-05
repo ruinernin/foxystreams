@@ -1,4 +1,6 @@
 # foxystreams
 <p>
- * [plugin.video.foxystreams-0.0.7.zip](zips/plugin.video.foxystreams/plugin.video.foxystreams-0.0.7.zip)
+  <ul>
+    <li><a href="zips/plugin.video.foxystreams/plugin.video.foxystreams-0.0.7.zip">plugin.video.foxystreams-0.0.7.zip</a></li>
+  </ul>
 </p>
