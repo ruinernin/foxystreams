@@ -6,6 +6,8 @@ import xbmc
 
 PM_URL = 'https://www.premiumize.me/api'
 PM_KEY = {'apikey': None} 
+EP_STRS = ('s{0:02d}e{1:02d}',
+           '{0:d}x{1:02d}')
 
 def pm_api_get(path, **kwargs):
     kwargs.update(PM_KEY)
@@ -49,9 +51,16 @@ def extract_hash(magnet):
 def get_largest_file(content):
     return max(content, key=lambda x: int(x['size']))['link']
 
-def resolveUrl(handle, magnet, _):
-    dls = pm_directdl(magnet)
-    link = get_largest_file(dls['content'])
+def resolveUrl(handle, magnet, _, tv=None):
+    dls = pm_directdl(magnet)['content']
+    if tv:
+        for ep_str in EP_STRS:
+            ep_str = ep_str.format(*tv)
+            potentials = filter(lambda x: ep_str in x['path'].lower(), dls)
+            if potentials:
+                break
+        dls = potentials
+    link = get_largest_file(dls)
     li = xbmcgui.ListItem(path=link)
     xbmcplugin.setResolvedUrl(handle, True, listitem=li)
 

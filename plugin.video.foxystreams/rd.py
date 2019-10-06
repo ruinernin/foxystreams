@@ -123,7 +123,7 @@ def check_availability(magnets, chunks=5, tv=None):
         cached_fileids.append(get_single_fileid(varients, tv=tv))
     return cached_fileids
 
-def resolveUrl(handle, magnet, fid):
+def resolveUrl(handle, magnet, fid, tv=None):
     tor_id = rd_addmagnet(magnet)['id']
     rd_selectfiles(tor_id, [fid])
     info = rd_torrentinfo(tor_id)

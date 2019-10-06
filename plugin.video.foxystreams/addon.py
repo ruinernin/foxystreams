@@ -199,7 +199,7 @@ elif mode in ['list', 'search', 'imdb', 'tvdb']:
                 torrent = torrents[selected]
                 cache = caches[selected]
                 if cache:
-                    debrid.resolveUrl(addon_handle, torrent['download'], cache)
+                    debrid.resolveUrl(addon_handle, torrent['download'], cache, tv=tv)
                 else:
                     failed = True
                     if mode == 'tvdb':
