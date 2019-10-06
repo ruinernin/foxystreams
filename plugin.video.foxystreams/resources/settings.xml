@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="General">
-        <setting type="select" id="debrid_provider" label="Debrid Provider" values="rd|pm"/>
-        <setting type="action" label="AuthRD" action="RunPlugin(plugin://plugin.video.foxystreams?mode=auth)"/>
-        <setting type="bool" id="search_ranked" label="ranked releases" default="true"/>
-        <setting type="text" id="pm_key" label="PM API Key" />
+        <setting type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize"/>
+        <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
+        <setting type="action" label="Reset Debrid Auth (Save first if changing)" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth)"/>
     </category>
     <category label="Search categories">
+        <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
         <setting type="bool" id="4kx265hdr" label="4k HDR x265" default="true"/>
         <setting type="bool" id="4kx265" label="4k x265" default="true"/>
         <setting type="bool" id="4kx264" label="4k x264" default="false"/>
@@ -20,11 +20,10 @@
     </category>
     <category label="BTS">
         <setting type="text" id="torapikey" label="torapikey" />
-        <setting type="text" id="rd_clientid" label="rd_clientid" />
-        <setting type="text" id="rd_clientsecret" label="rd_clientsecret" />
-        <setting type="text" id="rd_code" label="rd_code" />
-        <setting type="text" id="rd_token" label="rd_token" />
-        <setting type="text" id="rd_expires" label="rd_expires" default="0"/>
-        <setting type="bool" id="rd_authed" label="rd_authed" default="false"/>
+        <setting type="text" id="RealDebrid.api_key" label="RealDebrid.api_key" />
+        <setting type="text" id="RealDebrid.refresh_token" label="RealDebrid.refresh_token" />
+        <setting type="text" id="RealDebrid.client_id" label="RealDebrid.clientid" />
+        <setting type="text" id="RealDebrid.client_secret" label="RealDebrid.client_secret" />
+        <setting type="text" id="RealDebrid.expires" label="RealDebrid.expires" />
     </category>
 </settings>

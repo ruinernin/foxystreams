@@ -1,3 +1,4 @@
+import xbmc
 import xbmcgui
 import xbmcplugin
 
@@ -28,3 +29,6 @@ def directory_view(handle, names_urls, videos=False, folders=False, more=False):
 def dialog_select(names):
     listitems = build_listitems(names)
     return xbmcgui.Dialog().select('Select', listitems)
+
+def notify(message):
+    xbmc.executebuiltin('Notification(FoxyStreams, {})'.format(message))

@@ -1,14 +1,16 @@
+import inspect
+import urllib
+import urlparse
+import sys
+import time
+
+import requests
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
-import requests
-import urlparse
-import urllib
-import sys
-import time
-import ui
-import rd
-import pm
+
+from resources.lib import debrid, ui
+
 
 searches = [
 ]
@@ -31,68 +33,37 @@ TORRENT_API_LAST_REQ = 0
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
 addon = xbmcaddon.Addon()
-args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
 if addon_handle > 0:
     xbmcplugin.setContent(addon_handle, 'videos')
+
 
 def build_url(**kwargs):
     return base_url + '?' + urllib.urlencode(kwargs)
 
-mode = args.get('mode', None)
 
-def authenticate():
-    interface = xbmcgui.DialogProgress()
-    code = rd.rd_code()
-    start = time.time()
-    expire = start + code['expires_in']
-    interface.create('Authenticate debrid', code['user_code'])
-    while True:
-        credentials = rd.rd_credentials(code['device_code'])
-        if 'error' in credentials:
-            xbmc.sleep(code['interval']*1000)
-            delta = time.time() - start
-            if delta >= code['expires_in']:
+def authenticate(user_debrid):
+    debrid_auth = user_debrid.authenticate()
+    if debrid_auth in (True, None):
+        return debrid_auth
+    if isinstance(debrid_auth, basestring):
+        interface = xbmcgui.DialogProgress()
+        interface.create('Authenticate Debrid', debrid_auth)
+        while True:
+            xbmc.sleep(5*1000)
+            progress = user_debrid.authenticate()
+            if isinstance(progress, bool):
                 interface.close()
-                return
-            interface.update(int(100 * delta / code['expires_in']))
-            continue
-        break
-    refresh_token()
-    rd_settings = [
-        ('rd_clientid', credentials['client_id']),
-        ('rd_clientsecret', credentials['client_secret']),
-        ('rd_code', code['device_code']),
-        ('rd_expires', int(time.time())),
-    ]
-    for setting_id, value in rd_settings:
-        addon.setSetting(setting_id, str(value))
-    addon.setSettingBool('rd_authed', True)
+                return progress
+            elif isinstance(progress, int):
+                interface.update(progress)
+            else:
+                # This should not happen
+                xbmc.log(
+                    'catastrophic debrid auth failure: %s' % str(progress),
+                    xbmc.LOGEROR)
+                interface.close()
+    return False
 
-def refresh_token():
-    if not addon.getSettingBool('rd_authed'):
-        return
-    expires = addon.getSetting('rd_expires')
-    now = time.time()
-    if now < int(expires):
-        return addon.getSetting('rd_token')
-    client_id = addon.getSetting('rd_clientid')
-    client_secret = addon.getSetting('rd_clientsecret')
-    code = addon.getSetting('rd_code')
-    token = rd.rd_token(code, client_id, client_secret)
-    expires = now + token['expires_in']
-    addon.setSetting('rd_code', token['refresh_token'])
-    addon.setSetting('rd_token', token['access_token'])
-    return token['access_token']
-
-token = refresh_token()
-rd.RD_KEY['auth_token'] = token
-pm.PM_KEY['apikey'] = addon.getSetting('pm_key')
-
-provider = addon.getSetting('debrid_provider')
-if provider == 'pm':
-    debrid = pm
-elif provider == 'rd':
-    debrid = rd
 
 def torrentapi_req(**kwargs):
     api_url = 'https://torrentapi.org/pubapi_v2.php'
@@ -113,116 +84,203 @@ def torrentapi_req(**kwargs):
         return torrentapi_req(**kwargs)
     return resp
 
+
 def torrentapi_newtoken():
     resp = torrentapi_req(get_token='get_token')
     addon.setSetting('torapikey', resp['token'])
 
-def search_dialog():
-    return xbmcgui.Dialog().input('Search')
 
-if mode is None:
-    names_urls = []
-    names_urls.append(('Downloads',
-                      build_url(mode='downloads')))
-    names_urls.append(('List',
-                      build_url(mode='list')))
-    names_urls.append(('Search',
-                      build_url(mode='search')))
-    for search in searches:
-        names_urls.append((search,
-                          build_url(mode='search', search=search)))
-    ui.directory_view(addon_handle, names_urls, folders=True)
+def episode_search_strings(season, episode):
+    string_templates = (
+        's{season:02d}e{episode:02d}',
+        '{season}x{episode:02d}',
+        's{season:02d}',
+    )
+    return [template.format(season=season, episode=episode)
+            for template in string_templates]
 
-elif mode == 'auth':
-    authenticate()
 
-elif mode == 'downloads':
-    torrents = debrid.downloads()
-    for cached, name, url in torrents:
-        if cached:
-            li = xbmcgui.ListItem('[COLOR green]' + name + '[/COLOR]')
-            li.setProperty('IsPlayable', 'true')
-            li.setInfo('video', {'title': name,
-                                 'mediatype': 'video',})
-            xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
-        else:
-            url = build_url(mode='noop')
-            li = xbmcgui.ListItem('[COLOR red]'+name+'[/COLOR]')
-            xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
-    xbmcplugin.endOfDirectory(addon_handle)
+def episode_file_filter(season, episode):
+    string_templates = (
+        's{season:02d}e{episode:02d}',
+        '{season}x{episode:02d}',
+    )
+    search_strings = [template.format(season=season, episode=episode)
+                      for template in string_templates]
+    def is_in(filename):
+        for search_string in search_strings:
+            if search_string in filename.lower():
+                return True
+        return False
+    return is_in
 
-elif mode in ['list', 'search', 'imdb', 'tvdb']:
-    cats = []
-    for name, cat_id in rarbg_categories.iteritems():
-        if addon.getSettingBool(name):
-            cats.append(cat_id)
-    sstring = None
-    category = ';'.join(cats)
-    ranked = int(addon.getSettingBool('search_ranked'))
-    tv = None
-    if mode == 'list':
-        torrents = torrentapi_req(mode='list', category=category, ranked=ranked)['torrent_results']
-    if mode == 'search':
-        if not args.get('search'):
-            sstring = search_dialog()
-        else:
-            sstring = args['search']
-        torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
-    if mode == 'imdb':
-        torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
-    if mode == 'tvdb':
-        episode = int(args['episode'])
-        season = int(args['season'])
-        sstrings = ('s{season:02d}e{episode:02d}', '{season}x{episode:02d}', 's{season:02d}')
-        for sstring in sstrings:
-            sstring = sstring.format(episode=episode, season=season)
-            torrents = torrentapi_req(mode='search', category=category, search_tvdb=args['search'], search_string=sstring, ranked=ranked).get('torrent_results')
-            if torrents:
-                break
-        else:
-            raise Exception('No Torrents Found')
-        tv = (season, episode)
-    caches = debrid.check_availability([tor['download'] for tor in torrents], tv=tv)
-    names_urls = []
-    for torrent, cache in zip(torrents, caches):
-        if cache:
-            names_urls.append(('[COLOR green]' + torrent['filename'] + '[/COLOR]',
-                               build_url(mode='vid', magnet=torrent['download'], cache=cache)))
-        else:
-            names_urls.append(('[COLOR red]' + torrent['filename'] + '[/COLOR]',
-                               build_url(mode='tor', magnet=torrent['download'])))
-    if mode in ['imdb', 'tvdb']:
-        if len(names_urls) > 0:
-            selected = ui.dialog_select(zip(*names_urls)[0])
-            failed = False
-            if selected >= 0:
-                torrent = torrents[selected]
-                cache = caches[selected]
-                if cache:
-                    debrid.resolveUrl(addon_handle, torrent['download'], cache, tv=tv)
-                else:
-                    failed = True
-                    if mode == 'tvdb':
-                        debrid.grab_torrent(torrent['download'], tv=(int(args['season']), int(args['episode'])))
-                    else:
-                        debrid.grab_torrent(torrent['download'])
-                    xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to Debrid)')
-            else:
-                failed = True
-        else:
-            failed = True
-        if failed:
-            li = xbmcgui.ListItem(path='')
-            xbmcplugin.setResolvedUrl(addon_handle, False, li)
-    else:
-        ui.directory_view(addon_handle, names_urls, videos=True)
 
-elif mode == 'vid':
-    debrid.resolveUrl(addon_handle, args['magnet'], args['cache'])
+def get_user_input(title='Search'):
+    return xbmcgui.Dialog().input(title)
 
-elif mode == 'tor':
-    status = debrid.grab_torrent(args['magnet'])
+
+def get_debrid_provider(provider_name):
+    """Returns a DebridProvider object created with saved settings."""
+    provider = getattr(debrid, provider_name)
+    cfg_str = '{}.{{}}'.format(provider_name)
+    args, _, _, defaults = inspect.getargspec(provider.__init__)
+    args = args[1:] # Strip self
+    config_argvals = []
+    for arg in args:
+        config_setting = addon.getSetting(cfg_str.format(arg))
+        if config_setting == 'None':
+            config_setting = None
+        config_argvals.append(config_setting)
+    kwargs = {arg: cfg or default
+              for arg, cfg, default in zip(args, config_argvals, defaults)}
+    return provider(**kwargs)
+
+
+def save_debrid_settings(provider):
+    """Saves provider debrid settings to settings.xml."""
+    provider_name = provider.__class__.__name__
+    cfg_str = '{}.{{}}'.format(provider_name)
+    args, _, _, _ = inspect.getargspec(provider.__init__)
+    args = args[1:] # Strip self
+    for arg in args:
+        addon.setSetting(cfg_str.format(arg), str(getattr(provider, arg, '')))
+
+
+def add_torrent(user_debrid, magnet, fn_filter=None):
+    status = user_debrid.grab_torrent(magnet, fn_filter=fn_filter)
     if status:
-        xbmc.executebuiltin('Notification(FoxyStreams, Added Torrent to Debrid)')
+        ui.notify('Added Torrent to Debrid')
     else:
         xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')
+        ui.notify('Failed to add to Debrid')
+
+
+def main():
+    args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
+    mode = args.get('mode', None)
+    user_selected_debrid = addon.getSetting('debrid_provider')
+    if user_selected_debrid:
+        user_debrid = get_debrid_provider(user_selected_debrid)
+    else:
+        user_debrid = debrid.DebridProvider()
+    try:
+        auth = authenticate(user_debrid)
+    except NotImplementedError:
+        auth = False
+    else:
+        if auth is True:
+            save_debrid_settings(user_debrid)
+    if auth is False:
+        ui.notify("Debrid not active")
+
+    if mode is None:
+        names_urls = []
+        names_urls.append(('Downloads',
+                           build_url(mode='downloads')))
+        names_urls.append(('List',
+                           build_url(mode='list')))
+        names_urls.append(('Search',
+                           build_url(mode='search')))
+        for search in searches:
+            names_urls.append((search,
+                               build_url(mode='search', search=search)))
+        ui.directory_view(addon_handle, names_urls, folders=True)
+
+    elif mode == 'reset_auth':
+        user_debrid = user_debrid.__class__()
+        save_debrid_settings(user_debrid)
+
+    elif mode == 'downloads':
+        torrents = user_debrid.downloads()
+        for cached, name, url in torrents:
+            if cached:
+                li = xbmcgui.ListItem('[COLOR green]' + name + '[/COLOR]')
+                li.setProperty('IsPlayable', 'true')
+                li.setInfo('video', {'title': name,
+                                     'mediatype': 'video',})
+                # Premiumize DL list is direct link
+                if not isinstance(user_debrid, debrid.Premiumize):
+                    url = build_url(mode='vid', link=url)
+                xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
+            else:
+                url = build_url(mode='noop')
+                li = xbmcgui.ListItem('[COLOR red]'+name+'[/COLOR]')
+                xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
+        xbmcplugin.endOfDirectory(addon_handle)
+
+    elif mode in ['list', 'search', 'imdb', 'tvdb']:
+        cats = []
+        for name, cat_id in rarbg_categories.iteritems():
+            if addon.getSettingBool(name):
+                cats.append(cat_id)
+        sstring = None
+        category = ';'.join(cats)
+        ranked = int(addon.getSettingBool('search_ranked'))
+        fn_filter = None
+        if mode == 'list':
+            torrents = torrentapi_req(mode='list', category=category, ranked=ranked)['torrent_results']
+        if mode == 'search':
+            if not args.get('search'):
+                sstring = get_user_input()
+            else:
+                sstring = args['search']
+            torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
+        if mode == 'imdb':
+            torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
+        if mode == 'tvdb':
+            episode = int(args['episode'])
+            season = int(args['season'])
+            for sstring in episode_search_strings(season, episode):
+                torrents = torrentapi_req(mode='search', category=category, search_tvdb=args['search'], search_string=sstring, ranked=ranked).get('torrent_results')
+                if torrents:
+                    break
+            else:
+                raise Exception('No Torrents Found')
+            fn_filter = episode_file_filter(season, episode)
+        caches = user_debrid.check_availability([tor['download'] for tor in torrents], fn_filter=fn_filter)
+        names_urls = []
+        for torrent, cache in zip(torrents, caches):
+            if cache:
+                names_urls.append(('[COLOR green]' + torrent['filename'] + '[/COLOR]',
+                                   build_url(mode='vid', magnet=torrent['download'], cache=cache)))
+            else:
+                names_urls.append(('[COLOR red]' + torrent['filename'] + '[/COLOR]',
+                                   build_url(mode='tor', magnet=torrent['download'])))
+        if mode in ['imdb', 'tvdb']:
+            media_url = ''
+            if names_urls:
+                selected = ui.dialog_select(zip(*names_urls)[0])
+                failed = False
+                if selected >= 0:
+                    torrent = torrents[selected]
+                    cache = caches[selected]
+                    if cache:
+                        # RealDebrid is single file only, use cached fileid
+                        if isinstance(user_debrid, debrid.RealDebrid):
+                            fn_filter = cache
+                        media_url = user_debrid.resolve_url(torrent['download'], fn_filter=fn_filter)
+                    else:
+                        failed = True
+                        add_torrent(user_debrid, torrent['download'], fn_filter=fn_filter)
+                else:
+                    failed = True
+            else:
+                failed = True
+            li = xbmcgui.ListItem(path=media_url)
+            xbmcplugin.setResolvedUrl(addon_handle, not failed, li)
+        else:
+            ui.directory_view(addon_handle, names_urls, videos=True)
+
+    elif mode == 'vid':
+        if args.get('link'):
+            url = user_debrid.unrestrict(args['link'])
+        else:
+            url = user_debrid.resolve_url(args['magnet'], args['cache'])
+        li = xbmcgui.ListItem(path=url)
+        xbmcplugin.setResolvedUrl(addon_handle, True, li)
+
+    elif mode == 'tor':
+        add_torrent(user_debrid, args['magnet'])
+
+if __name__ == '__main__':
+    main()
