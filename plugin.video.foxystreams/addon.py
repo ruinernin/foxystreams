@@ -28,7 +28,6 @@ rarbg_categories = {
     'XXX': '4',
 }
 
-TORRENT_API_LAST_REQ = 0
 
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
@@ -65,29 +64,33 @@ def authenticate(user_debrid):
     return False
 
 
-def torrentapi_req(**kwargs):
-    api_url = 'https://torrentapi.org/pubapi_v2.php'
-    hdrs = {'user-agent': 'ruin/1.0'}
-    params = {
-        'token': addon.getSetting('torapikey'),
-        'app_id': 'ruin',
-        'limit': 100,
-    }
-    params.update(kwargs)
-    global TORRENT_API_LAST_REQ
-    while TORRENT_API_LAST_REQ + 2 > time.time():
-        xbmc.sleep(1*1000)
-    resp = requests.get(api_url, params=params, headers=hdrs).json()
-    TORRENT_API_LAST_REQ = time.time()
-    if resp.get('error_code') in (2, 4):
-        torrentapi_newtoken()
-        return torrentapi_req(**kwargs)
-    return resp
+def torrentapi_factory(token=None, ratelimit=0.5):
+    """Returns torrentapi function.
 
-
-def torrentapi_newtoken():
-    resp = torrentapi_req(get_token='get_token')
-    addon.setSetting('torapikey', resp['token'])
+    token -- API token, if not provided or invalid it will be requested.
+    ratelimit -- reqs/s allowed, default 1req/2s
+    """
+    wait_time = 1/ratelimit
+    def torrentapi(**kwargs):
+        api_url = 'https://torrentapi.org/pubapi_v2.php'
+        hdrs = {'user-agent': 'ruin/1.0'}
+        params = {
+            'token': torrentapi.token,
+            'app_id': 'ruin',
+            'limit': 100,
+        }
+        params.update(kwargs)
+        while torrentapi.last_req + wait_time > time.time():
+            xbmc.sleep(int((wait_time/3.0)*1000))
+        resp = requests.get(api_url, params=params, headers=hdrs).json()
+        torrentapi.last_req = time.time()
+        if resp.get('error_code') in (2, 4):
+            torrentapi.token = torrentapi(get_token='get_token')['token']
+            return torrentapi(**kwargs)
+        return resp
+    torrentapi.last_req = 0
+    torrentapi.token = token
+    return torrentapi
 
 
 def episode_search_strings(season, episode):
@@ -113,10 +116,6 @@ def episode_file_filter(season, episode):
                 return True
         return False
     return is_in
-
-
-def get_user_input(title='Search'):
-    return xbmcgui.Dialog().input(title)
 
 
 def get_debrid_provider(provider_name):
@@ -146,15 +145,6 @@ def save_debrid_settings(provider):
         addon.setSetting(cfg_str.format(arg), str(getattr(provider, arg, '')))
 
 
-def add_torrent(user_debrid, magnet, fn_filter=None):
-    status = user_debrid.grab_torrent(magnet, fn_filter=fn_filter)
-    if status:
-        ui.notify('Added Torrent to Debrid')
-    else:
-        xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')
-        ui.notify('Failed to add to Debrid')
-
-
 def main():
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
@@ -172,6 +162,8 @@ def main():
             save_debrid_settings(user_debrid)
     if auth is False:
         ui.notify("Debrid not active")
+    user_torrentapi_token = addon.getSetting('torapikey')
+    torrentapi = torrentapi_factory(token=user_torrentapi_token)
 
     if mode is None:
         names_urls = []
@@ -218,20 +210,20 @@ def main():
         ranked = int(addon.getSettingBool('search_ranked'))
         fn_filter = None
         if mode == 'list':
-            torrents = torrentapi_req(mode='list', category=category, ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='list', category=category, ranked=ranked)['torrent_results']
         if mode == 'search':
             if not args.get('search'):
-                sstring = get_user_input()
+                sstring = ui.get_user_input()
             else:
                 sstring = args['search']
-            torrents = torrentapi_req(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
         if mode == 'imdb':
-            torrents = torrentapi_req(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
         if mode == 'tvdb':
             episode = int(args['episode'])
             season = int(args['season'])
             for sstring in episode_search_strings(season, episode):
-                torrents = torrentapi_req(mode='search', category=category, search_tvdb=args['search'], search_string=sstring, ranked=ranked).get('torrent_results')
+                torrents = torrentapi(mode='search', category=category, search_tvdb=args['search'], search_string=sstring, ranked=ranked).get('torrent_results')
                 if torrents:
                     break
             else:
@@ -261,7 +253,7 @@ def main():
                         media_url = user_debrid.resolve_url(torrent['download'], fn_filter=fn_filter)
                     else:
                         failed = True
-                        add_torrent(user_debrid, torrent['download'], fn_filter=fn_filter)
+                        ui.add_torrent(user_debrid, torrent['download'], fn_filter=fn_filter)
                 else:
                     failed = True
             else:
@@ -280,7 +272,10 @@ def main():
         xbmcplugin.setResolvedUrl(addon_handle, True, li)
 
     elif mode == 'tor':
-        add_torrent(user_debrid, args['magnet'])
+        ui.add_torrent(user_debrid, args['magnet'])
+
+    if user_torrentapi_token != torrentapi.token:
+        addon.setSetting('torapikey', torrentapi.token)
 
 if __name__ == '__main__':
     main()

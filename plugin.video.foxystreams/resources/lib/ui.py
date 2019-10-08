@@ -16,6 +16,11 @@ def build_listitems(names, videos=False):
         listitems.append(li)
     return listitems
 
+
+def get_user_input(title='Search'):
+    return xbmcgui.Dialog().input(title)
+
+
 def directory_view(handle, names_urls, videos=False, folders=False, more=False):
     names, urls = zip(*names_urls)
     true_list = [folders] * len(names)
@@ -26,9 +31,20 @@ def directory_view(handle, names_urls, videos=False, folders=False, more=False):
         return
     xbmcplugin.endOfDirectory(handle=handle)
 
+
 def dialog_select(names):
     listitems = build_listitems(names)
     return xbmcgui.Dialog().select('Select', listitems)
 
+
 def notify(message):
     xbmc.executebuiltin('Notification(FoxyStreams, {})'.format(message))
+
+
+def add_torrent(user_debrid, magnet, fn_filter=None):
+    status = user_debrid.grab_torrent(magnet, fn_filter=fn_filter)
+    if status:
+        notify('Added Torrent to Debrid')
+    else:
+        xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')
+        notify('Failed to add to Debrid')
