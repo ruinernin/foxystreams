@@ -28,10 +28,11 @@ Search
 ------
 Choose categories to search within on rarbg.
 
-Definition of ranked switch from [api](https://torrentapi.org/apidocs_v2.txt)
+Definition of ranked switch from API.
 
-    By default the api will return only ranked torrents ( internal ) , scene releases + -rarbg releases + -rartv releases.
-    If you want other groups included in the results use the ranked parameter with a value of 0 to get them included.
+>By default the api will return only ranked torrents ( internal ) , scene releases + -rarbg releases + -rartv releases.
+>
+>If you want other groups included in the results use the ranked parameter with a value of 0 to get them included.
 
 
 Usage
