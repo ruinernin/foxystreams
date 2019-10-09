@@ -9,7 +9,7 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
-from resources.lib import debrid, ui
+from resources.lib import debrid, ui, scrapers
 
 
 searches = [
@@ -62,35 +62,6 @@ def authenticate(user_debrid):
                     xbmc.LOGEROR)
                 interface.close()
     return False
-
-
-def torrentapi_factory(token=None, ratelimit=0.5):
-    """Returns torrentapi function.
-
-    token -- API token, if not provided or invalid it will be requested.
-    ratelimit -- reqs/s allowed, default 1req/2s
-    """
-    wait_time = 1/ratelimit
-    def torrentapi(**kwargs):
-        api_url = 'https://torrentapi.org/pubapi_v2.php'
-        hdrs = {'user-agent': 'ruin/1.0'}
-        params = {
-            'token': torrentapi.token,
-            'app_id': 'ruin',
-            'limit': 100,
-        }
-        params.update(kwargs)
-        while torrentapi.last_req + wait_time > time.time():
-            xbmc.sleep(int((wait_time/3.0)*1000))
-        resp = requests.get(api_url, params=params, headers=hdrs).json()
-        torrentapi.last_req = time.time()
-        if resp.get('error_code') in (2, 4):
-            torrentapi.token = torrentapi(get_token='get_token')['token']
-            return torrentapi(**kwargs)
-        return resp
-    torrentapi.last_req = 0
-    torrentapi.token = token
-    return torrentapi
 
 
 def episode_search_strings(season, episode):
@@ -163,7 +134,7 @@ def main():
     if auth is False:
         ui.notify("Debrid not active")
     user_torrentapi_token = addon.getSetting('torapikey')
-    torrentapi = torrentapi_factory(token=user_torrentapi_token)
+    torrentapi = scrapers.torrentapi_factory(token=user_torrentapi_token)
 
     if mode is None:
         names_urls = []
