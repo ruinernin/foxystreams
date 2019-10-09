@@ -1,4 +1,5 @@
 import re
+import time
 
 import requests
 
@@ -19,15 +20,15 @@ def torrentapi_factory(token=None, ratelimit=0.5):
             'limit': 100,
         }
         params.update(kwargs)
-        while torrentapi.last_req + wait_time > time.time():
-            xbmc.sleep(int((wait_time/3.0)*1000))
+        while torrentapi._last_req + wait_time > time.time():
+            time.sleep(wait_time/3.0)
         resp = requests.get(api_url, params=params, headers=hdrs).json()
-        torrentapi.last_req = time.time()
-        if resp.get('error_code') in (2, 4):
+        torrentapi._last_req = time.time()
+        if resp.get('error_code') in (1, 2, 4):
             torrentapi.token = torrentapi(get_token='get_token')['token']
             return torrentapi(**kwargs)
         return resp
-    torrentapi.last_req = 0
+    torrentapi._last_req = 0
     torrentapi.token = token
     return torrentapi
 
@@ -55,13 +56,13 @@ def bitlord_factory(token=None, cookies=None):
         offset -- int offset of items for pagination.
         """
         if not bitlord.token or not bitlord.cookies:
-            if bitlord.errors > 1:
+            if bitlord._errors > 1:
                 return None
             main_page = requests.get(url)
             var = re.findall(tkn_var_re, main_page.text)[0]
             bitlord.token = ''.join(re.findall(tkn_re.format(var),
                                                main_page.text))
-            bitlord.cookies = main_page.cookies
+            bitlord.cookies = main_page.cookies.get_dict()
             return bitlord(**kwargs)
         data = {
             'query': None,
@@ -69,7 +70,7 @@ def bitlord_factory(token=None, cookies=None):
             'limit': 25,
             'filters[field]': 'added',
             'filters[sort]': 'asc',
-            'filters[time]': 0,
+            'filters[time]': 4,
             'filters[category]': 3,
             'filters[adult]': False,
             'filters[risky]': False,
@@ -89,11 +90,11 @@ def bitlord_factory(token=None, cookies=None):
         if req.status_code >= 400:
             bitlord.token = None
             bitlord.cookies = None
-            bitlord.errors += 1
+            bitlord._errors += 1
             return bitlord(**kwargs)
-        bitlord.errors = 0
+        bitlord._errors = 0
         return req.json()
     bitlord.token = token
     bitlord.cookies = cookies
-    bitlord.errors = 0
+    bitlord._errors = 0
     return bitlord

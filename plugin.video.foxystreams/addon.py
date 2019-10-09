@@ -1,10 +1,10 @@
+import functools
 import inspect
+import json
 import urllib
 import urlparse
 import sys
-import time
 
-import requests
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
@@ -129,6 +129,33 @@ def user_torrentapi_settings():
     }
 
 
+def get_json_cache(name):
+    addon_id = addon.getAddonInfo('id')
+    path = 'special://temp/{_id}.{name}.json'.format(_id=addon_id, name=name)
+    path = xbmc.translatePath(path)
+    try:
+        with open(path) as cfile:
+            cached_data = json.load(cfile)
+    except IOError as ioerr:
+        if ioerr.errno == 2:
+            cached_data = {}
+        else:
+            raise
+    return cached_data
+
+
+def write_json_cache(name, cache):
+    cache = {k: v for k, v in cache.iteritems() if not k.startswith('_')}
+    addon_id = addon.getAddonInfo('id')
+    path = 'special://temp/{_id}.{name}.json'.format(_id=addon_id, name=name)
+    path = xbmc.translatePath(path)
+    try:
+        with open(path, 'w') as cfile:
+            json.dump(cache, cfile)
+    except Exception:
+        raise
+
+
 def main():
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
@@ -146,8 +173,12 @@ def main():
             save_debrid_settings(user_debrid)
     if auth is False:
         ui.notify("Debrid not active")
-    user_torrentapi_token = addon.getSetting('torapikey')
-    torrentapi = scrapers.torrentapi_factory(token=user_torrentapi_token)
+    user_cfg_scraper = addon.getSetting('scraper')
+    cached_settings = get_json_cache(user_cfg_scraper)
+    scraper = getattr(scrapers,
+                      user_cfg_scraper + '_factory')(**cached_settings)
+    if scraper.func_name == 'torrentapi':
+        scraper = functools.partial(scraper, **user_torrentapi_settings())
 
     if mode is None:
         names_urls = []
@@ -188,20 +219,20 @@ def main():
         sstring = None
         fn_filter = None
         if mode == 'list':
-            torrents = torrentapi(mode='list', **user_torrentapi_settings())['torrent_results']
+            torrents = scraper(mode='list')['torrent_results']
         if mode == 'search':
             if not args.get('search'):
                 sstring = ui.get_user_input()
             else:
                 sstring = args['search']
-            torrents = torrentapi(mode='search', search_string=sstring, **user_torrentapi_settings())['torrent_results']
+            torrents = scraper(mode='search', search_string=sstring)['torrent_results']
         if mode == 'imdb':
-            torrents = torrentapi(mode='search', search_imdb=args['search'], **user_torrentapi_settings())['torrent_results']
+            torrents = scraper(mode='search', search_imdb=args['search'])['torrent_results']
         if mode == 'tvdb':
             episode = int(args['episode'])
             season = int(args['season'])
             for sstring in episode_search_strings(season, episode):
-                torrents = torrentapi(mode='search', search_tvdb=args['search'], search_string=sstring, **user_torrentapi_settings()).get('torrent_results')
+                torrents = scraper(mode='search', search_tvdb=args['search'], search_string=sstring).get('torrent_results')
                 if torrents:
                     break
             else:
@@ -252,8 +283,8 @@ def main():
     elif mode == 'tor':
         ui.add_torrent(user_debrid, args['magnet'])
 
-    if user_torrentapi_token != torrentapi.token:
-        addon.setSetting('torapikey', torrentapi.token)
+    scraper = scraper.func
+    write_json_cache(scraper.func_name, scraper.func_dict)
 
 if __name__ == '__main__':
     main()

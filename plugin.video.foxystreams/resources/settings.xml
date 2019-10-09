@@ -2,6 +2,7 @@
 <settings>
     <category label="General">
         <setting type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize"/>
+        <setting type="select" id="scraper" label="Scraper" values="torrentapi|bitlord" default="torrentapi"/>
         <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
         <setting type="action" label="Reset Debrid Auth (Save first if changing)" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth)"/>
     </category>
@@ -19,7 +20,6 @@
         <setting type="bool" id="XXX" label="XXX" default="false"/>
     </category>
     <category label="BTS">
-        <setting type="text" id="torapikey" label="torapikey" />
         <setting type="text" id="RealDebrid.api_key" label="RealDebrid.api_key" />
         <setting type="text" id="RealDebrid.refresh_token" label="RealDebrid.refresh_token" />
         <setting type="text" id="RealDebrid.client_id" label="RealDebrid.clientid" />
