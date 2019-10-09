@@ -116,6 +116,19 @@ def save_debrid_settings(provider):
         addon.setSetting(cfg_str.format(arg), str(getattr(provider, arg, '')))
 
 
+def user_torrentapi_settings():
+    cats = []
+    for name, cat_id in rarbg_categories.iteritems():
+        if addon.getSettingBool(name):
+            cats.append(cat_id)
+    category = ';'.join(cats)
+    ranked = int(addon.getSettingBool('search_ranked'))
+    return {
+        'category': category,
+        'ranked': ranked,
+    }
+
+
 def main():
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
@@ -172,29 +185,23 @@ def main():
         xbmcplugin.endOfDirectory(addon_handle)
 
     elif mode in ['list', 'search', 'imdb', 'tvdb']:
-        cats = []
-        for name, cat_id in rarbg_categories.iteritems():
-            if addon.getSettingBool(name):
-                cats.append(cat_id)
         sstring = None
-        category = ';'.join(cats)
-        ranked = int(addon.getSettingBool('search_ranked'))
         fn_filter = None
         if mode == 'list':
-            torrents = torrentapi(mode='list', category=category, ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='list', **user_torrentapi_settings())['torrent_results']
         if mode == 'search':
             if not args.get('search'):
                 sstring = ui.get_user_input()
             else:
                 sstring = args['search']
-            torrents = torrentapi(mode='search', category=category, search_string=sstring, ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='search', search_string=sstring, **user_torrentapi_settings())['torrent_results']
         if mode == 'imdb':
-            torrents = torrentapi(mode='search', category=category, search_imdb=args['search'], ranked=ranked)['torrent_results']
+            torrents = torrentapi(mode='search', search_imdb=args['search'], **user_torrentapi_settings())['torrent_results']
         if mode == 'tvdb':
             episode = int(args['episode'])
             season = int(args['season'])
             for sstring in episode_search_strings(season, episode):
-                torrents = torrentapi(mode='search', category=category, search_tvdb=args['search'], search_string=sstring, ranked=ranked).get('torrent_results')
+                torrents = torrentapi(mode='search', search_tvdb=args['search'], search_string=sstring, **user_torrentapi_settings()).get('torrent_results')
                 if torrents:
                     break
             else:
