@@ -175,7 +175,7 @@ def main():
             save_debrid_settings(user_debrid)
     if auth is False:
         ui.notify("Debrid not active")
-    user_cfg_scraper = addon.getSetting('scraper')
+    user_cfg_scraper = args.get('scraper') or addon.getSetting('scraper')
     cached_settings = get_json_cache(user_cfg_scraper)
     scraper = getattr(scrapers,
                       user_cfg_scraper + '_factory')(**cached_settings)
@@ -236,7 +236,7 @@ def main():
 
     # Scraping
     def find_magnets(query=None, tv=False, movie=False, imdb=None, tvdb=None,
-                     season=None, episode=None):
+                     season=None, episode=None, title=None, year=None):
         """Return a list of tuples [(name, magnet)]."""
         if isinstance(scraper, functools.partial):
             scraper_name = scraper.func.func_name
@@ -248,7 +248,12 @@ def main():
             if scraper_name == 'bitlord':
                 results = scraper()
         elif movie:
-            results = scraper(mode='search', search_imdb=imdb)
+            if scraper_name == 'torrentapi':
+                results = scraper(mode='search', search_imdb=imdb)
+            if scraper_name == 'bitlord':
+                results = scraper(query='{} {}'.format(title, year),
+                                  filters_field='seeds',
+                                  filters_sort='desc')
         elif tv:
             for querystr in episode_search_strings(season, episode):
                 results = scraper(mode='search', search_tvdb=tvdb,
@@ -267,7 +272,8 @@ def main():
                     for t in results['torrent_results']]
         if results and scraper_name == 'bitlord':
             return [(t['name'], t['magnet'])
-                    for t in results['content']]
+                    for t in results['content']
+                    if t['seeds'] > 0]
 
     fn_filter = None
     if mode == 'search':
@@ -276,7 +282,9 @@ def main():
     if mode == 'list':
         torrents = find_magnets()
     if mode == 'imdb':
-        torrents = find_magnets(movie=True, imdb=args['search'])
+        torrents = find_magnets(movie=True, imdb=args['search'],
+                                title=args.get('title'),
+                                year=args.get('year'))
     if mode == 'tvdb':
         season = int(args['season'])
         episode = int(args['episode'])
@@ -284,20 +292,22 @@ def main():
                                 episode=episode)
         fn_filter = episode_file_filter(season, episode)
 
+    cleaned_torrents = []
+    for name, magnet in torrents:
+        try:
+            str(name)
+            str(magnet)
+        except UnicodeEncodeError:
+            continue
+        else:
+            cleaned_torrents.append((name, magnet))
     # Providing
-    names, magnets = zip(*torrents)
+    names, magnets = zip(*cleaned_torrents)
     names = list(names)
     magnets = list(magnets)
     caches = user_debrid.check_availability(magnets, fn_filter=fn_filter)
     names_urls = []
     for name, magnet, cache in zip(names, magnets, caches):
-        try:
-            str(name)
-            str(magnet)
-        except UnicodeEncodeError:
-            names.remove(name)
-            magnets.remove(magnet)
-            continue
         if cache:
             names_urls.append(('[COLOR green]'+name+'[/COLOR]',
                                build_url(mode='vid', magnet=magnet, cache=cache)))

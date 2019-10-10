@@ -51,7 +51,7 @@ def bitlord_factory(token=None, cookies=None):
             3 - Movies
             4 - TV
         filters_field -- sort field e.g. 'added', 'seeds'.
-        filters_sort -- string 'asc' or 'dsc'.
+        filters_sort -- string 'asc' or 'desc'.
         limit -- int of max items to return.
         offset -- int offset of items for pagination.
         """

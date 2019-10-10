@@ -340,4 +340,4 @@ def extract_hash(magnet):
     query = urlparse.urlparse(magnet).query
     exact_topic = urlparse.parse_qs(query)['xt'][0]
     sha1 = exact_topic.split(':')[-1]
-    return sha1
+    return sha1.lower()
