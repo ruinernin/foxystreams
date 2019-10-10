@@ -157,6 +157,8 @@ def write_json_cache(name, cache):
 
 
 def main():
+    """Business logic. `imdb` and `tvdb` are from external plugins."""
+    # Set up provider and scraper
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
     user_selected_debrid = addon.getSetting('debrid_provider')
@@ -180,6 +182,7 @@ def main():
     if scraper.func_name == 'torrentapi':
         scraper = functools.partial(scraper, **user_torrentapi_settings())
 
+    # Show root plugin directory
     if mode is None:
         names_urls = []
         names_urls.append(('Downloads',
@@ -192,98 +195,139 @@ def main():
             names_urls.append((search,
                                build_url(mode='search', search=search)))
         ui.directory_view(addon_handle, names_urls, folders=True)
+        return
 
-    elif mode == 'reset_auth':
-        user_debrid = user_debrid.__class__()
-        save_debrid_settings(user_debrid)
-
-    elif mode == 'downloads':
-        torrents = user_debrid.downloads()
-        for cached, name, url in torrents:
-            if cached:
-                li = xbmcgui.ListItem('[COLOR green]' + name + '[/COLOR]')
-                li.setProperty('IsPlayable', 'true')
-                li.setInfo('video', {'title': name,
-                                     'mediatype': 'video',})
-                # Premiumize DL list is direct link
-                if not isinstance(user_debrid, debrid.Premiumize):
-                    url = build_url(mode='vid', link=url)
-                xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
-            else:
-                url = build_url(mode='noop')
-                li = xbmcgui.ListItem('[COLOR red]'+name+'[/COLOR]')
-                xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=li)
-        xbmcplugin.endOfDirectory(addon_handle)
-
-    elif mode in ['list', 'search', 'imdb', 'tvdb']:
-        sstring = None
-        fn_filter = None
-        if mode == 'list':
-            torrents = scraper(mode='list')['torrent_results']
-        if mode == 'search':
-            if not args.get('search'):
-                sstring = ui.get_user_input()
-            else:
-                sstring = args['search']
-            torrents = scraper(mode='search', search_string=sstring)['torrent_results']
-        if mode == 'imdb':
-            torrents = scraper(mode='search', search_imdb=args['search'])['torrent_results']
-        if mode == 'tvdb':
-            episode = int(args['episode'])
-            season = int(args['season'])
-            for sstring in episode_search_strings(season, episode):
-                torrents = scraper(mode='search', search_tvdb=args['search'], search_string=sstring).get('torrent_results')
-                if torrents:
-                    break
-            else:
-                raise Exception('No Torrents Found')
-            fn_filter = episode_file_filter(season, episode)
-        caches = user_debrid.check_availability([tor['download'] for tor in torrents], fn_filter=fn_filter)
-        names_urls = []
-        for torrent, cache in zip(torrents, caches):
-            if cache:
-                names_urls.append(('[COLOR green]' + torrent['filename'] + '[/COLOR]',
-                                   build_url(mode='vid', magnet=torrent['download'], cache=cache)))
-            else:
-                names_urls.append(('[COLOR red]' + torrent['filename'] + '[/COLOR]',
-                                   build_url(mode='tor', magnet=torrent['download'])))
-        if mode in ['imdb', 'tvdb']:
-            media_url = ''
-            if names_urls:
-                selected = ui.dialog_select(zip(*names_urls)[0])
-                failed = False
-                if selected >= 0:
-                    torrent = torrents[selected]
-                    cache = caches[selected]
-                    if cache:
-                        # RealDebrid is single file only, use cached fileid
-                        if isinstance(user_debrid, debrid.RealDebrid):
-                            fn_filter = cache
-                        media_url = user_debrid.resolve_url(torrent['download'], fn_filter=fn_filter)
-                    else:
-                        failed = True
-                        ui.add_torrent(user_debrid, torrent['download'], fn_filter=fn_filter)
-                else:
-                    failed = True
-            else:
-                failed = True
-            li = xbmcgui.ListItem(path=media_url)
-            xbmcplugin.setResolvedUrl(addon_handle, not failed, li)
-        else:
-            ui.directory_view(addon_handle, names_urls, videos=True)
-
-    elif mode == 'vid':
+    if mode == 'vid':
         if args.get('link'):
             url = user_debrid.unrestrict(args['link'])
         else:
             url = user_debrid.resolve_url(args['magnet'], args['cache'])
         li = xbmcgui.ListItem(path=url)
         xbmcplugin.setResolvedUrl(addon_handle, True, li)
+        return
 
     elif mode == 'tor':
         ui.add_torrent(user_debrid, args['magnet'])
+        return
 
-    scraper = scraper.func
+    # Clears Debrid provider settings
+    if mode == 'reset_auth':
+        user_debrid = user_debrid.__class__()
+        save_debrid_settings(user_debrid)
+        return
+
+    # Show Debrid downloads as directory
+    if mode == 'downloads':
+        torrents = user_debrid.downloads()
+        downloading = []
+        downloaded = []
+        for cached, name, url in torrents:
+            if cached:
+                # Premiumize DL list is direct link
+                if not isinstance(user_debrid, debrid.Premiumize):
+                    url = build_url(mode='vid', link=url)
+                downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
+            else:
+                downloading.append(('[COLOR red]'+name+'[/COLOR]',
+                                    build_url(mode='noop')))
+        ui.directory_view(addon_handle, downloading, more=True)
+        ui.directory_view(addon_handle, downloaded, videos=True)
+        return
+
+    # Scraping
+    def find_magnets(query=None, tv=False, movie=False, imdb=None, tvdb=None,
+                     season=None, episode=None):
+        """Return a list of tuples [(name, magnet)]."""
+        if isinstance(scraper, functools.partial):
+            scraper_name = scraper.func.func_name
+        else:
+            scraper_name = scraper.func_name
+        if not (query or tv or movie):
+            if scraper_name == 'torrentapi':
+                results = scraper(mode='list')
+            if scraper_name == 'bitlord':
+                results = scraper()
+        elif movie:
+            results = scraper(mode='search', search_imdb=imdb)
+        elif tv:
+            for querystr in episode_search_strings(season, episode):
+                results = scraper(mode='search', search_tvdb=tvdb,
+                                  search_string=querystr)
+                if results.get('torrent_results'):
+                    break
+            else:
+                results = []
+        elif query:
+            if scraper_name == 'torrentapi':
+                results = scraper(mode='search', search_string=query)
+            if scraper_name == 'bitlord':
+                results = scraper(query=query)
+        if results and scraper_name == 'torrentapi':
+            return [(t['filename'], t['download'])
+                    for t in results['torrent_results']]
+        if results and scraper_name == 'bitlord':
+            return [(t['name'], t['magnet'])
+                    for t in results['content']]
+
+    fn_filter = None
+    if mode == 'search':
+        query = args.get('search') or ui.get_user_input()
+        torrents = find_magnets(query=query)
+    if mode == 'list':
+        torrents = find_magnets()
+    if mode == 'imdb':
+        torrents = find_magnets(movie=True, imdb=args['search'])
+    if mode == 'tvdb':
+        season = int(args['season'])
+        episode = int(args['episode'])
+        torrents = find_magnets(tv=True, tvdb=args['search'], season=season,
+                                episode=episode)
+        fn_filter = episode_file_filter(season, episode)
+
+    # Providing
+    names, magnets = zip(*torrents)
+    names = list(names)
+    magnets = list(magnets)
+    caches = user_debrid.check_availability(magnets, fn_filter=fn_filter)
+    names_urls = []
+    for name, magnet, cache in zip(names, magnets, caches):
+        try:
+            str(name)
+            str(magnet)
+        except UnicodeEncodeError:
+            names.remove(name)
+            magnets.remove(magnet)
+            continue
+        if cache:
+            names_urls.append(('[COLOR green]'+name+'[/COLOR]',
+                               build_url(mode='vid', magnet=magnet, cache=cache)))
+        else:
+            names_urls.append(('[COLOR red]'+name+'[/COLOR]',
+                               build_url(mode='tor', magnet=magnet)))
+
+
+    # Display results
+    if mode in ['imdb', 'tvdb']:
+        media_url = ''
+        if names_urls:
+            selected = ui.dialog_select(zip(*names_urls)[0])
+            if selected >= 0:
+                magnet = magnets[selected]
+                cache = caches[selected]
+                if cache:
+                    if isinstance(user_debrid, debrid.RealDebrid):
+                        fn_filter = cache
+                    media_url = user_debrid.resolve_url(magnet,
+                                                        fn_filter=fn_filter)
+                else:
+                    ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
+        li = xbmcgui.ListItem(path=media_url)
+        xbmcplugin.setResolvedUrl(addon_handle, bool(media_url), li)
+    if mode in ['list', 'search']:
+        ui.directory_view(addon_handle, names_urls, videos=True)
+
+    if isinstance(scraper, functools.partial):
+        scraper = scraper.func
     write_json_cache(scraper.func_name, scraper.func_dict)
 
 if __name__ == '__main__':

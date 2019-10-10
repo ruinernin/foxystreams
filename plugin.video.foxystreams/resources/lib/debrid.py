@@ -189,11 +189,20 @@ class RealDebrid(DebridProvider):
 
     @staticmethod
     def get_cached_fileid(varients, fn_filter=None):
+        """Returns a single file ID from the list of varients.
+
+        varients -- list of varients as returned by instantAvailability query.
+        fn_filter -- optional filter function applied on filenames.
+
+        First all non single file varients are removed, then varients where
+        filename does not match the fn_filter function. Of the remaining
+        varients the largest is returned.
+        """
         def varient_filter(varient):
             if len(varient) != 1:
                 return False
             if callable(fn_filter):
-                if not fn_filter(varient):
+                if not fn_filter(varient.values()[0]['filename']):
                     return False
             return True
         varients = [varient for varient in varients if varient_filter(varient)]
@@ -204,6 +213,14 @@ class RealDebrid(DebridProvider):
 
     @staticmethod
     def get_fileid(files, fn_filter=None):
+        """Returns a single file ID from the list of files.
+
+        files -- list of files as returned by torrents/info query.
+        fn_filter -- optional filter function applied on paths.
+
+        All files where path does not match the fn_filter function are removed.
+        Of the remaining files the largest is returned.
+        """
         if callable(fn_filter):
             files = [_file for _file in files if fn_filter(_file['path'])]
         if not files:

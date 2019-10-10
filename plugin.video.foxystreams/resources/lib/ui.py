@@ -22,11 +22,12 @@ def get_user_input(title='Search'):
 
 
 def directory_view(handle, names_urls, videos=False, folders=False, more=False):
-    names, urls = zip(*names_urls)
-    true_list = [folders] * len(names)
-    listitems = build_listitems(names, videos=videos)
-    xbmcplugin.addDirectoryItems(handle=handle,
-                                 items=zip(urls, listitems, true_list))
+    if names_urls:
+        names, urls = zip(*names_urls)
+        true_list = [folders] * len(names)
+        listitems = build_listitems(names, videos=videos)
+        xbmcplugin.addDirectoryItems(handle=handle,
+                                     items=zip(urls, listitems, true_list))
     if more:
         return
     xbmcplugin.endOfDirectory(handle=handle)

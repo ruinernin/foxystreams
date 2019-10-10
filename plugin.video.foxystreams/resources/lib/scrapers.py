@@ -67,7 +67,7 @@ def bitlord_factory(token=None, cookies=None):
         data = {
             'query': None,
             'offset': 0,
-            'limit': 25,
+            'limit': 100,
             'filters[field]': 'added',
             'filters[sort]': 'asc',
             'filters[time]': 4,
