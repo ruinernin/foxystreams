@@ -49,3 +49,34 @@ def add_torrent(user_debrid, magnet, fn_filter=None):
     else:
         xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')
         notify('Failed to add to Debrid')
+
+
+def metadata_from(args):
+    metadata = {
+        'info': {
+            'title': args.get('title', ''),
+            'plot': args.get('plot', ''),
+            'genre': args.get('genre', ''),
+            'votes': args.get('votes', ''),
+            'rating': args.get('rating', ''),
+            'year': args.get('year', ''),
+            'mpaa': args.get('mpaa', ''),
+        },
+        'art': {
+            'poster': args.get('poster', ''),
+            'fanart': args.get('fanart', ''),
+        },
+    }
+    info = metadata['info']
+    if args['mode'] == 'imdb':
+        info['mediatype'] = 'movie'
+        info['originaltitle'] = args.get('originaltitle', '')
+        info['premiered'] = args.get('premiered', '')
+    elif args['mode'] == 'tvdb':
+        info['mediatype'] = 'episode'
+        info['episode'] = args.get('episode', '')
+        info['season'] = args.get('season', '')
+        info['tvshowtitle'] = args.get('tvshowtitle', '')
+        info['originaltitle'] = args.get('tvshowtitle', '')
+        info['aired'] = args.get('aired', '')
+    return metadata

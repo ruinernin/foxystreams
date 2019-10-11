@@ -332,6 +332,9 @@ def main():
                 else:
                     ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
         li = xbmcgui.ListItem(path=media_url)
+        metadata = ui.metadata_from(args)
+        li.setInfo('video', metadata['info'])
+        li.setArt(metadata['art'])
         xbmcplugin.setResolvedUrl(addon_handle, bool(media_url), li)
     if mode in ['list', 'search']:
         ui.directory_view(addon_handle, names_urls, videos=True)
