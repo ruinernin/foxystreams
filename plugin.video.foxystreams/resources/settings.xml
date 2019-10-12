@@ -2,7 +2,7 @@
 <settings>
     <category label="General">
         <setting type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize"/>
-        <setting type="select" id="scraper" label="Scraper" values="torrentapi|bitlord" default="torrentapi"/>
+        <setting type="select" id="scraper" label="Scraper" values="TorrentApi|BitLord" default="TorrentApi"/>
         <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
         <setting type="action" label="Reset Debrid Auth (Save first if changing)" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth)"/>
     </category>

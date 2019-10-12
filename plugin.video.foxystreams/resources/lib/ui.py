@@ -56,7 +56,7 @@ def metadata_from(args):
         'info': {
             'title': args.get('title', ''),
             'plot': args.get('plot', ''),
-            'genre': args.get('genre', ''),
+            'genres': args.get('genre', ''),
             'votes': args.get('votes', ''),
             'rating': args.get('rating', ''),
             'year': args.get('year', ''),
@@ -70,13 +70,13 @@ def metadata_from(args):
     info = metadata['info']
     if args['mode'] == 'imdb':
         info['mediatype'] = 'movie'
-        info['originaltitle'] = args.get('originaltitle', '')
+        info['originaltitle'] = args.get('original_title', '')
         info['premiered'] = args.get('premiered', '')
     elif args['mode'] == 'tvdb':
         info['mediatype'] = 'episode'
         info['episode'] = args.get('episode', '')
         info['season'] = args.get('season', '')
-        info['tvshowtitle'] = args.get('tvshowtitle', '')
-        info['originaltitle'] = args.get('tvshowtitle', '')
+        info['tvshowtitle'] = args.get('showname', '')
+        info['originaltitle'] = args.get('showname', '')
         info['aired'] = args.get('aired', '')
     return metadata

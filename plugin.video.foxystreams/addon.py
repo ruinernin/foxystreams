@@ -141,11 +141,10 @@ def get_json_cache(name):
             cached_data = {}
         else:
             raise
-    return cached_data
+    return {k: v for k, v in cached_data.iteritems() if v}
 
 
 def write_json_cache(name, cache):
-    cache = {k: v for k, v in cache.iteritems() if not k.startswith('_')}
     addon_id = addon.getAddonInfo('id')
     path = 'special://temp/{_id}.{name}.json'.format(_id=addon_id, name=name)
     path = xbmc.translatePath(path)
@@ -157,8 +156,8 @@ def write_json_cache(name, cache):
 
 
 def main():
-    """Business logic. `imdb` and `tvdb` are from external plugins."""
-    # Set up provider and scraper
+    """Business logic. `movie` and `tv` are from external plugins."""
+    # Set up provider
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
     user_selected_debrid = addon.getSetting('debrid_provider')
@@ -175,12 +174,18 @@ def main():
             save_debrid_settings(user_debrid)
     if auth is False:
         ui.notify("Debrid not active")
-    user_cfg_scraper = args.get('scraper') or addon.getSetting('scraper')
-    cached_settings = get_json_cache(user_cfg_scraper)
-    scraper = getattr(scrapers,
-                      user_cfg_scraper + '_factory')(**cached_settings)
-    if scraper.func_name == 'torrentapi':
-        scraper = functools.partial(scraper, **user_torrentapi_settings())
+
+    # Set up scraper
+    selected_scraper = args.get('scraper') or addon.getSetting('scraper')
+    cached_settings = get_json_cache(selected_scraper)
+    scraper = getattr(scrapers, selected_scraper)()
+    for attr, value in cached_settings.iteritems():
+        setattr(scraper, attr, value)
+    if isinstance(scraper, scrapers.TorrentApi):
+        find_magnets = functools.partial(scraper.find_magnets,
+                                         **user_torrentapi_settings())
+    else:
+        find_magnets = scraper.find_magnets
 
     # Show root plugin directory
     if mode is None:
@@ -193,7 +198,7 @@ def main():
                            build_url(mode='search')))
         for search in searches:
             names_urls.append((search,
-                               build_url(mode='search', search=search)))
+                               build_url(mode='search', query=search)))
         ui.directory_view(addon_handle, names_urls, folders=True)
         return
 
@@ -235,95 +240,51 @@ def main():
         return
 
     # Scraping
-    def find_magnets(query=None, tv=False, movie=False, imdb=None, tvdb=None,
-                     season=None, episode=None, title=None, year=None):
-        """Return a list of tuples [(name, magnet)]."""
-        if isinstance(scraper, functools.partial):
-            scraper_name = scraper.func.func_name
-        else:
-            scraper_name = scraper.func_name
-        if not (query or tv or movie):
-            if scraper_name == 'torrentapi':
-                results = scraper(mode='list')
-            if scraper_name == 'bitlord':
-                results = scraper()
-        elif movie:
-            if scraper_name == 'torrentapi':
-                results = scraper(mode='search', search_imdb=imdb)
-            if scraper_name == 'bitlord':
-                results = scraper(query='{} {}'.format(title, year),
-                                  filters_field='seeds',
-                                  filters_sort='desc')
-        elif tv:
-            for querystr in episode_search_strings(season, episode):
-                results = scraper(mode='search', search_tvdb=tvdb,
-                                  search_string=querystr)
-                if results.get('torrent_results'):
-                    break
-            else:
-                results = []
-        elif query:
-            if scraper_name == 'torrentapi':
-                results = scraper(mode='search', search_string=query)
-            if scraper_name == 'bitlord':
-                results = scraper(query=query)
-        if results and scraper_name == 'torrentapi':
-            return [(t['filename'], t['download'])
-                    for t in results['torrent_results']]
-        if results and scraper_name == 'bitlord':
-            return [(t['name'], t['magnet'])
-                    for t in results['content']
-                    if t['seeds'] > 0]
-
     fn_filter = None
     if mode == 'search':
-        query = args.get('search') or ui.get_user_input()
-        torrents = find_magnets(query=query)
+        query = args.get('query') or ui.get_user_input()
+        names_magnets = find_magnets(query=query)
     if mode == 'list':
-        torrents = find_magnets()
-    if mode == 'imdb':
-        torrents = find_magnets(movie=True, imdb=args['search'],
-                                title=args.get('title'),
-                                year=args.get('year'))
-    if mode == 'tvdb':
+        names_magnets = find_magnets()
+    if mode == 'movie':
+        names_magnets = find_magnets(movie=True, **args)
+    if mode == 'tv':
         season = int(args['season'])
         episode = int(args['episode'])
-        torrents = find_magnets(tv=True, tvdb=args['search'], season=season,
-                                episode=episode)
+        for query in episode_search_strings(season, episode):
+            names_magnets = list(find_magnets(tv=True, query=query, **args))
+            if names_magnets:
+                break
+        else:
+            # Do something to say nothing found
+            pass
         fn_filter = episode_file_filter(season, episode)
 
-    cleaned_torrents = []
-    for name, magnet in torrents:
-        try:
-            str(name)
-            str(magnet)
-        except UnicodeEncodeError:
-            continue
-        else:
-            cleaned_torrents.append((name, magnet))
     # Providing
-    names, magnets = zip(*cleaned_torrents)
+    names, magnets = zip(*names_magnets)
     names = list(names)
     magnets = list(magnets)
     caches = user_debrid.check_availability(magnets, fn_filter=fn_filter)
-    names_urls = []
+    cached_names_magnets = []
+    uncached_names_magnets = []
     for name, magnet, cache in zip(names, magnets, caches):
         if cache:
-            names_urls.append(('[COLOR green]'+name+'[/COLOR]',
-                               build_url(mode='vid', magnet=magnet, cache=cache)))
+            #url = build_url(mode='vid', magnet=magnet, cache=cache)
+            cached_names_magnets.append(('[COLOR green]'+name+'[/COLOR]',
+                                         magnet, cache))
         else:
-            names_urls.append(('[COLOR red]'+name+'[/COLOR]',
-                               build_url(mode='tor', magnet=magnet)))
-
+            #url = build_url(mode='tor', magnet=magnet)
+            uncached_names_magnets.append(('[COLOR red]'+name+'[/COLOR]',
+                                           magnet, cache))
 
     # Display results
-    if mode in ['imdb', 'tvdb']:
+    if mode in ('movie', 'tv'):
+        all_names_magnets = cached_names_magnets + uncached_names_magnets
         media_url = ''
-        if names_urls:
-            selected = ui.dialog_select(zip(*names_urls)[0])
+        if all_names_magnets:
+            selected = ui.dialog_select(zip(*all_names_magnets)[0])
             if selected >= 0:
-                magnet = magnets[selected]
-                cache = caches[selected]
+                _, magnet, cache = all_names_magnets[selected]
                 if cache:
                     if isinstance(user_debrid, debrid.RealDebrid):
                         fn_filter = cache
@@ -337,11 +298,17 @@ def main():
         li.setArt(metadata['art'])
         xbmcplugin.setResolvedUrl(addon_handle, bool(media_url), li)
     if mode in ['list', 'search']:
+        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
+                      for name, magnet, cache in cached_names_magnets]
+        ui.directory_view(addon_handle, names_urls, videos=True, more=True)
+        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
+                      for name, magnet, cache in uncached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True)
 
-    if isinstance(scraper, functools.partial):
-        scraper = scraper.func
-    write_json_cache(scraper.func_name, scraper.func_dict)
+    write_json_cache(scraper.__class__.__name__,
+                     {attr: getattr(scraper, attr)
+                      for attr in scraper.cache_attrs})
+
 
 if __name__ == '__main__':
     main()
