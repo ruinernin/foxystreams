@@ -68,11 +68,11 @@ def metadata_from(args):
         },
     }
     info = metadata['info']
-    if args['mode'] == 'imdb':
+    if args['mode'] == 'movie':
         info['mediatype'] = 'movie'
-        info['originaltitle'] = args.get('original_title', '')
+        #info['originaltitle'] = args.get('original_title', '')
         info['premiered'] = args.get('premiered', '')
-    elif args['mode'] == 'tvdb':
+    elif args['mode'] == 'tv':
         info['mediatype'] = 'episode'
         info['episode'] = args.get('episode', '')
         info['season'] = args.get('season', '')

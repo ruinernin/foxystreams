@@ -85,7 +85,8 @@ class TorrentApi(Scraper):
             result = self.api_get(mode='search', search_string=query,
                                   category=category, ranked=ranked)
         else:
-            result = self.api_get()
+            result = self.api_get(mode='list', category=category,
+                                  ranked=ranked)
         result = result.get('torrent_results', list())
         return ((t['filename'], t['download']) for t in result)
 
@@ -148,7 +149,7 @@ class BitLord(Scraper):
         if movie:
             query = '{} {}'.format(kwargs['title'], kwargs['year'])
             results = self.api_post(query=query, filters_category=3,
-                                    filter_field='seeds', filter_sort='desc')
+                                    filters_field='seeds', filter_sort='desc')
         elif tv:
             query = '{} {}'.format(kwargs['showname'], query)
             results = self.api_post(query=query, filters_category=4)
