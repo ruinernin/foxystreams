@@ -126,7 +126,7 @@ class BitLord(Scraper):
         _headers = dict(headers)
         _headers['X-Request-Token'] = self.token
         _data = {}
-        for key, value in data.iteritems():
+        for key, value in data.items():
             # Translate filters e.g. `filters_category` -> `filters[category]`
             if key.startswith('filters_'):
                 key = 'filters[{}]'.format(key[8:])
