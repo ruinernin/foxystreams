@@ -56,13 +56,14 @@ class DebridProvider(object):
                             params=kwargs,
                             timeout=self.timeout)
 
-    def rest_api_post(self, path, params=None, **kwargs):
+    def rest_api_post(self, path, params=None, _files=None, **kwargs):
         if params is None:
             params = {}
         params.update(self.auth_params())
         return requests.post(self.rest_url + path,
                              params=params,
                              data=kwargs,
+                             files=_files,
                              timeout=self.timeout)
 
     def rest_api_delete(self, path, **kwargs):
@@ -305,6 +306,12 @@ class Premiumize(DebridProvider):
     def grab_torrent(self, magnet, fn_filter=None):
         path = '/transfer/create'
         result = self.rest_api_post(path, src=magnet).json()
+        return result.get('status') == 'success'
+
+    def add_torrent(self, torrent_path):
+        path = '/transfer/create'
+        files = {'file': open(torrent_path, 'rb')}
+        result = self.rest_api_post(path, _files=files).json()
         return result.get('status') == 'success'
 
     def cached_content(self, magnet, fn_filter=None):
