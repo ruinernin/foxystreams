@@ -304,15 +304,16 @@ class Premiumize(DebridProvider):
         result = self.rest_api_post(path, src=magnet).json()
         return result.get('status') == 'success'
 
-    def resolve_url(self, magnet, fn_filter=None):
+    def cached_content(self, magnet, fn_filter=None):
         path = '/transfer/directdl'
         content = self.rest_api_post(path, src=magnet).json()['content']
-        print content
         if fn_filter:
             content = [item for item in content if fn_filter(item['path'])]
-        print content
         content.sort(key=lambda x: int(x['size']))
-        return content[-1]['link']
+        return content
+
+    def resolve_url(self, magnet, fn_filter=None):
+        return self.cached_content(magnet, fn_filter)[-1]['link']
 
     def downloads(self):
         path = '/transfer/list'
