@@ -8,3 +8,36 @@ jobs:
       - run: zip -Xr plugin.video.foxystreams.zip plugin.video.foxystreams
       - store_artifacts:
           path: plugin.video.foxystreams.zip
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - plugin.video.foxystreams.zip
+  release:
+    docker:
+      - image: circleci/python:2
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./
+      - run: |
+          python create_repository.py -d ./zips ./plugin.video.foxystreams.zip
+          git ls-files -m ./zips/|grep -v ".zip"
+          git add ./zips
+          git commit -m "Release version $CIRCLE_TAG"
+          git push origin HEAD:master
+workflows:
+  version: 2
+  build_and_release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /v.*/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
