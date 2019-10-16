@@ -13,6 +13,10 @@ jobs:
           paths:
             - plugin.video.foxystreams.zip
   release:
+    parameters:
+      commit_branch:
+        type: string
+        default: master
     docker:
       - image: circleci/python:2
     steps:
@@ -24,7 +28,7 @@ jobs:
           git ls-files -m ./zips/|grep -v ".zip"
           git add ./zips
           git commit -m "Release version $CIRCLE_TAG"
-          git push origin HEAD:master
+          git push origin HEAD:<< parameters.commit_branch >>
 workflows:
   version: 2
   build_and_release:
