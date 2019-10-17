@@ -48,7 +48,7 @@ workflows:
       - build:
           filters:
             tags:
-              only: /v.*/
+              only: /.*/
             branches:
               ignore:
                 - repo
@@ -61,7 +61,7 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /v.*/
+              only: /.*/
       - release:
           commit_branch: devrepo
           overwrite: true
