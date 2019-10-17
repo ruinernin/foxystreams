@@ -9,7 +9,7 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
-from resources.lib.foxydebrid import debrid, ui, scrapers
+from resources.lib.foxydebrid import debrid, scrapers
 from resources.lib import ui
 
 

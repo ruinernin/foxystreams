@@ -1,3 +1,4 @@
+
 version: 2.1
 jobs:
   build:
@@ -5,30 +6,41 @@ jobs:
       - image: circleci/python:2
     steps:
       - checkout
-      - run: zip -Xr plugin.video.foxystreams.zip plugin.video.foxystreams
+      - run: |
+          sed -i "s/name=\"FoxyStreams\" version=\"CURRENT_VERSION\"/name=\"FoxyStreams\" version=\"${CIRCLE_TAG-0.0.$CIRCLE_BUILD_NUM}\"/" ./plugin.video.foxystreams/addon.xml
+          zip -Xr /tmp/plugin.video.foxystreams.zip plugin.video.foxystreams
       - store_artifacts:
-          path: plugin.video.foxystreams.zip
+          path: /tmp/plugin.video.foxystreams.zip
       - persist_to_workspace:
-          root: ./
+          root: /tmp
           paths:
             - plugin.video.foxystreams.zip
   release:
     parameters:
       commit_branch:
         type: string
-        default: master
+        default: repo
+      overwrite:
+        type: boolean
+        default: false
     docker:
       - image: circleci/python:2
     steps:
-      - checkout
       - attach_workspace:
-          at: ./
+          at: /tmp
+      - checkout
       - run: |
-          python create_repository.py -d ./zips ./plugin.video.foxystreams.zip
-          git ls-files -m ./zips/|grep -v ".zip"
+          git checkout << parameters.commit_branch >>
+          python create_repository.py -d ./zips /tmp/plugin.video.foxystreams.zip
+          find ./zips -name "*.zip" | xargs python create_repository.py -d ./zips
+      - unless:
+          condition: << parameters.overwrite >>
+          steps:
+            run: git ls-files -m ./zips/|grep -v ".zip"
+      - run: |
           git add ./zips
-          git commit -m "Release version $CIRCLE_TAG"
-          git push origin HEAD:<< parameters.commit_branch >>
+          git commit -m "Release version ${CIRCLE_TAG-0.0.$CIRCLE_BUILD_NUM}"
+          git push
 workflows:
   version: 2
   build_and_release:
@@ -37,7 +49,12 @@ workflows:
           filters:
             tags:
               only: /v.*/
+            branches:
+              ignore:
+                - repo
+                - devrepo
       - release:
+          context: publish
           requires:
             - build
           filters:
@@ -45,3 +62,14 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.*/
+      - release:
+          commit_branch: devrepo
+          overwrite: true
+          context: publish
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: 
+                - devrepo
+                - master
