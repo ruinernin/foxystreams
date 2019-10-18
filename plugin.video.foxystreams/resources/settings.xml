@@ -5,6 +5,7 @@
         <setting type="select" id="scraper" label="Scraper" values="TorrentApi|BitLord" default="TorrentApi"/>
         <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
         <setting type="action" label="Reset Debrid Auth (Save first if changing)" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth)"/>
+        <setting type="bool" id="show_cached_only" label="Show Debrid Cached Items Only" default="false"/>
     </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>

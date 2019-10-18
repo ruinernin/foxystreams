@@ -277,6 +277,8 @@ def main():
             #url = build_url(mode='tor', magnet=magnet)
             uncached_names_magnets.append(('[COLOR red]'+name+'[/COLOR]',
                                            magnet, cache))
+    if addon.getSettingBool('show_cached_only'):
+        uncached_names_magnets = []
 
     # Display results
     if mode in ('movie', 'tv'):
