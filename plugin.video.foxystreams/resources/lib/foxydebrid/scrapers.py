@@ -16,6 +16,7 @@ class Scraper(object):
         self.ratelimit = ratelimit
         self._last_request = 0
         self.cookies = None
+        self.timeout = 20
 
     def find_magnets(self, query=None, tv=False, movie=False, **kwargs):
         """Returns iterable of tuples (name, magnet_uri)."""
@@ -34,11 +35,13 @@ class Scraper(object):
         self._last_request = time.time()
         if func == 'GET':
             return requests.get(self.api_url + path, params=_params,
-                                headers=_headers, cookies=self.cookies).json()
+                                headers=_headers, cookies=self.cookies,
+                                timeout=self.timeout).json()
         elif func == 'POST':
             return requests.post(self.api_url + path, headers=_headers,
                                  params=_params, data=_data,
-                                 cookies=self.cookies).json()
+                                 cookies=self.cookies,
+                                 timeout=self.timeout).json()
 
     def api_get(self, path='', headers=(), **params):
         return self._api_req(path=path, headers=headers, params=params)
@@ -116,7 +119,7 @@ class BitLord(Scraper):
     def authenticate(self):
         tkn_var_re = r'token: (.*)\n'
         tkn_re = r"{} \+?= '(.*)'"
-        main_page = requests.get(self.api_url)
+        main_page = requests.get(self.api_url, timeout=self.timeout)
         var = re.findall(tkn_var_re, main_page.text)[0]
         self.token = ''.join(re.findall(tkn_re.format(var),
                                         main_page.text))
