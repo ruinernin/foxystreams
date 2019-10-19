@@ -317,7 +317,7 @@ def main():
         names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
                       for name, magnet, cache in cached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True, more=True)
-        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
+        names_urls = [(name, build_url(mode='tor', magnet=magnet, cache=cache))
                       for name, magnet, cache in uncached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True)
 
