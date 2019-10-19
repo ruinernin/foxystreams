@@ -212,8 +212,8 @@ class RealDebrid(DebridProvider):
         varients = [varient for varient in varients if varient_filter(varient)]
         if not varients:
             return False
-        varient = max(varients, key=lambda x: x.values()[0]['filesize'])
-        return varient.keys()[0]
+        varient = max(varients, key=lambda x: list(x.values())[0]['filesize'])
+        return list(varient.keys())[0]
 
     @staticmethod
     def get_fileid(files, fn_filter=None):
@@ -233,7 +233,7 @@ class RealDebrid(DebridProvider):
         return largest['id']
 
     def check_availability(self, magnets, chunks=10, fn_filter=None):
-        hashes = map(extract_hash, magnets)
+        hashes = [extract_hash(magnet) for magnet in magnets]
         all_results = {}
         for i in range(0, len(hashes), chunks):
             chunk = hashes[i:i+chunks]
