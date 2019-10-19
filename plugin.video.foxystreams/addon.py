@@ -189,6 +189,7 @@ def main():
         find_magnets = scraper.find_magnets
 
     # Show root plugin directory
+    searches = get_json_cache('searches').get('history', list())
     if mode is None:
         names_urls = []
         names_urls.append(('Downloads',
@@ -197,6 +198,8 @@ def main():
                            build_url(mode='list')))
         names_urls.append(('Search',
                            build_url(mode='search')))
+        names_urls.append(('Search History (Select to clear)',
+                           build_url(mode='delhistory')))
         for search in searches:
             names_urls.append((search,
                                build_url(mode='search', query=search)))
@@ -222,6 +225,10 @@ def main():
         save_debrid_settings(user_debrid)
         return
 
+    if mode == 'delhistory':
+        write_json_cache('searches', dict())
+        return
+
     # Show Debrid downloads as directory
     if mode == 'downloads':
         torrents = user_debrid.downloads()
@@ -245,6 +252,12 @@ def main():
     if mode == 'search':
         query = args.get('query') or ui.get_user_input()
         names_magnets = find_magnets(query=query)
+        try:
+            searches.remove(query)
+        except ValueError:
+            pass
+        searches.insert(0, query)
+        write_json_cache('searches', {'history': searches})
     if mode == 'list':
         names_magnets = find_magnets()
     if mode == 'movie':
