@@ -5,16 +5,15 @@ import urllib
 import urlparse
 import sys
 
+import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
 from resources.lib.foxydebrid import debrid, scrapers
 from resources.lib import ui
+from resources.lib.player import FoxyPlayer
 
-
-searches = [
-]
 
 rarbg_categories = {
     '4kx265hdr': '52',
@@ -312,7 +311,10 @@ def main():
         metadata = ui.metadata_from(args)
         li.setInfo('video', metadata['info'])
         li.setArt(metadata['art'])
+        player = FoxyPlayer()
         xbmcplugin.setResolvedUrl(addon_handle, bool(media_url), li)
+        if media_url:
+            player.run()
     if mode in ['list', 'search']:
         names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
                       for name, magnet, cache in cached_names_magnets]
