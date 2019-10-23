@@ -1,3 +1,15 @@
+FoxyStreams
+===========
+This plugin is an attempt to fill the gap of being [fast, light and easily
+forkable][Reasoning]. It is not particularly useful on it's own and is intended
+to be invoked by an external caller, such as [OpenMeta][]. What follows is
+general documentation. A [Quickstart][] bootstrap guide is available.
+
+[Reasoning]: https://github.com/ruinernin/foxystreams/wiki/Reasoning
+[OpenMeta]: https://github.com/a4k-openproject/plugin.video.openmeta/
+[Quickstart]: https://github.com/ruinernin/foxystreams/wiki/Quickstart-Guide
+
+
 Installation
 ============
 Repo
