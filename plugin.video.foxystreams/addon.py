@@ -65,6 +65,7 @@ def authenticate(user_debrid):
 
 
 def episode_search_strings(season, episode):
+    """Returns strings to be used when scraping for episodes."""
     string_templates = (
         's{season:02d}e{episode:02d}',
         '{season}x{episode:02d}',
@@ -75,6 +76,12 @@ def episode_search_strings(season, episode):
 
 
 def episode_file_filter(season, episode):
+    """Returns a function matching strings against season and episode.
+
+    The need for this filter is generally encountered in 'Season Packs'
+    where it is necessary to narrow down results to find the file we are
+    interested in.
+    """
     string_templates = (
         's{season:02d}e{episode:02d}',
         '{season}x{episode:02d}',
