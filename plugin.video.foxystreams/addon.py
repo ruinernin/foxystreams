@@ -216,7 +216,11 @@ def main():
         if args.get('link'):
             url = user_debrid.unrestrict(args['link'])
         else:
-            url = user_debrid.resolve_url(args['magnet'], args['cache'])
+            if isinstance(user_debrid, debrid.RealDebrid):
+                fn_filter = args['cache']
+            else:
+                fn_filter = None
+            url = user_debrid.resolve_url(args['magnet'], fn_filter)
         li = xbmcgui.ListItem(path=url)
         xbmcplugin.setResolvedUrl(addon_handle, True, li)
         return
