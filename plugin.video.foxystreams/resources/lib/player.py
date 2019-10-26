@@ -36,6 +36,7 @@ class FoxyPlayer(xbmc.Player):
         timeout = 20
         while True:
             if self.isPlayingVideo():
+                xbmc.sleep(2 * 1000)
                 break
             if time.time() > start + timeout:
                 break
@@ -116,6 +117,7 @@ class FoxyPlayer(xbmc.Player):
 
     def onAVStarted(self):
         """Ask user if they want to resume if a resume time is found."""
+        xbmc.sleep(2 * 1000)
         seconds = self.resume_time
         if seconds:
             human_timestamp = str(datetime.timedelta(seconds=seconds))
