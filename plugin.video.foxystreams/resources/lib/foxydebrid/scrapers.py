@@ -113,8 +113,6 @@ class BitLord(Scraper):
         super(BitLord, self).__init__(ratelimit=ratelimit)
         self.token = token
         self.cookies = cookies
-        if not (self.cookies and self.token):
-            self.authenticate()
 
     def authenticate(self):
         tkn_var_re = r'token: (.*)\n'
@@ -126,6 +124,8 @@ class BitLord(Scraper):
         self.cookies = main_page.cookies.get_dict()
 
     def api_post(self, path='/get_list', headers=(), params=(), **data):
+        if not (self.cookies and self.token):
+            self.authenticate()
         _headers = dict(headers)
         _headers['X-Request-Token'] = self.token
         _data = {}
