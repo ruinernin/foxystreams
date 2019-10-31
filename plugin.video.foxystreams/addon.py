@@ -36,6 +36,19 @@ if addon_handle > 0:
     xbmcplugin.setContent(addon_handle, 'videos')
 
 
+def migrate_config():
+    """Changeable function that updates user config.
+
+    If the settings change in settings.xml that are breaking between
+    versions this function will migrate existing settings.
+    """
+    debrid_provider = addon.getSetting('debrid_provider')
+    if debrid_provider != 'None':
+        addon.setSettingBool('debrid_enabled.' + debrid_provider, True)
+        addon.setSettingInt('debrid_priority.' + debrid_provider, 99)
+        addon.setSetting('debrid_provider', 'None')
+
+
 def build_url(**kwargs):
     return base_url + '?' + urllib.urlencode(kwargs)
 
@@ -43,7 +56,7 @@ def build_url(**kwargs):
 def authenticate(user_debrid):
     debrid_auth = user_debrid.authenticate()
     if debrid_auth in (True, None):
-        return debrid_auth
+        return True
     if isinstance(debrid_auth, basestring):
         interface = xbmcgui.DialogProgress()
         interface.create('Authenticate Debrid', debrid_auth)
@@ -94,6 +107,24 @@ def episode_file_filter(season, episode):
                 return True
         return False
     return is_in
+
+
+def get_debrid_priority(debrid_name):
+    """Get user set priority and add a fraction for stable sorting.
+
+    The fraction added is the sum of ASCII values of debrid_name
+    shifted 5 decimal places. We assume this is unique enough.
+    """
+    unique = sum(map(ord, debrid_name)) / (10.0 ** 5)
+    return addon.getSettingInt('debrid_priority.' + debrid_name) + unique
+
+
+def get_user_debrid_providers():
+    providers = ['RealDebrid',
+                 'Premiumize',]
+    user_providers = [provider for provider in providers
+                      if addon.getSettingBool('debrid_enabled.' + provider)]
+    return sorted(user_providers, key=get_debrid_priority)
 
 
 def get_debrid_provider(provider_name):
@@ -164,23 +195,27 @@ def write_json_cache(name, cache):
 
 def main():
     """Business logic. `movie` and `tv` are from external plugins."""
+    migrate_config()
     # Set up provider
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
     mode = args.get('mode', None)
-    user_selected_debrid = addon.getSetting('debrid_provider')
-    if user_selected_debrid:
-        user_debrid = get_debrid_provider(user_selected_debrid)
-    else:
-        user_debrid = debrid.DebridProvider()
-    try:
-        auth = authenticate(user_debrid)
-    except NotImplementedError:
-        auth = False
-    else:
-        if auth is True:
+    user_enabled_debrids = get_user_debrid_providers()
+    user_debrids = []
+    for provider in user_enabled_debrids:
+        user_debrid = get_debrid_provider(provider)
+        if authenticate(user_debrid):
             save_debrid_settings(user_debrid)
-    if auth is False:
-        ui.notify("Debrid not active")
+            user_debrids.append(user_debrid)
+        else:
+            ui.notify(provider + " not active")
+    if not user_debrids:
+        ui.notify("No Debrid service active")
+
+    # Clears Debrid provider settings
+    if mode == 'reset_auth':
+        user_debrid = getattr(user_debrid, args['provider'])()
+        save_debrid_settings(user_debrid)
+        return
 
     # Set up scraper
     selected_scraper = args.get('scraper') or addon.getSetting('scraper')
@@ -213,6 +248,7 @@ def main():
         return
 
     if mode == 'vid':
+        user_debrid = user_debrids[int(args['debrid'])]
         if args.get('link'):
             url = user_debrid.unrestrict(args['link'])
         else:
@@ -226,13 +262,7 @@ def main():
         return
 
     elif mode == 'tor':
-        ui.add_torrent(user_debrid, args['magnet'])
-        return
-
-    # Clears Debrid provider settings
-    if mode == 'reset_auth':
-        user_debrid = user_debrid.__class__()
-        save_debrid_settings(user_debrid)
+        ui.add_torrent(user_debrids[0], args['magnet'])
         return
 
     if mode == 'delhistory':
@@ -241,6 +271,7 @@ def main():
 
     # Show Debrid downloads as directory
     if mode == 'downloads':
+        user_debrid = user_debrids[0]
         torrents = user_debrid.downloads()
         downloading = []
         downloaded = []
@@ -288,18 +319,25 @@ def main():
     names, magnets = zip(*names_magnets)
     names = list(names)
     magnets = list(magnets)
-    caches = user_debrid.check_availability(magnets, fn_filter=fn_filter)
+    cached = [False] * len(magnets)
+    for debrid_idx, user_debrid in enumerate(user_debrids):
+        to_check = [(idx, magnets[idx]) for idx, cache in enumerate(cached)
+                    if not cache]
+        if not to_check:
+            break
+        caches = user_debrid.check_availability(zip(*to_check)[1],
+                                                fn_filter=fn_filter)
+        for (idx, _), cache in zip(to_check, caches):
+            cached[idx] = (debrid_idx, cache)
     cached_names_magnets = []
     uncached_names_magnets = []
-    for name, magnet, cache in zip(names, magnets, caches):
+    for name, magnet, (debrid_idx, cache) in zip(names, magnets, cached):
         if cache:
-            #url = build_url(mode='vid', magnet=magnet, cache=cache)
             cached_names_magnets.append(('[COLOR green]'+name+'[/COLOR]',
-                                         magnet, cache))
+                                         magnet, cache, debrid_idx))
         else:
-            #url = build_url(mode='tor', magnet=magnet)
             uncached_names_magnets.append(('[COLOR red]'+name+'[/COLOR]',
-                                           magnet, cache))
+                                           magnet, cache, 0))
     if addon.getSettingBool('show_cached_only'):
         uncached_names_magnets = []
 
@@ -310,7 +348,8 @@ def main():
         if all_names_magnets:
             selected = ui.dialog_select(zip(*all_names_magnets)[0])
             if selected >= 0:
-                _, magnet, cache = all_names_magnets[selected]
+                _, magnet, cache, i = all_names_magnets[selected]
+                user_debrid = user_debrids[i]
                 if cache:
                     if isinstance(user_debrid, debrid.RealDebrid):
                         fn_filter = cache
@@ -327,11 +366,13 @@ def main():
         if media_url:
             player.run()
     if mode in ['list', 'search']:
-        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache))
-                      for name, magnet, cache in cached_names_magnets]
+        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache,
+                                       debrid=i))
+                      for name, magnet, cache, i in cached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True, more=True)
-        names_urls = [(name, build_url(mode='tor', magnet=magnet, cache=cache))
-                      for name, magnet, cache in uncached_names_magnets]
+        names_urls = [(name, build_url(mode='tor', magnet=magnet, cache=cache,
+                                       debrid=i))
+                      for name, magnet, cache, i in uncached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True)
 
     write_json_cache(scraper.__class__.__name__,

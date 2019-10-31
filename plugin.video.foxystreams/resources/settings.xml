@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="General">
-        <setting type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize"/>
+        <setting visible="false" type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize|None" defualt="None"/>
         <setting type="select" id="scraper" label="Scraper" values="TorrentApi|BitLord" default="TorrentApi"/>
-        <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
-        <setting type="action" label="Reset Debrid Auth (Save first if changing)" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth)"/>
         <setting type="bool" id="show_cached_only" label="Show Debrid Cached Items Only" default="false"/>
+    </category>
+    <category label="RealDebrid">
+        <setting type="bool" id="debrid_enabled.RealDebrid" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.RealDebrid" label="Priority" default="100"/>
+        <setting type="action" label="Reset RealDebrid auth" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth&provider=RealDebrid)"/>
+    </category>
+    <category label="Premiumize">
+        <setting type="bool" id="debrid_enabled.Premiumize" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.Premiumize" label="Priority" default="100"/>
+        <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
     </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
