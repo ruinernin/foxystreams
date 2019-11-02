@@ -42,11 +42,7 @@ def migrate_config():
     If the settings change in settings.xml that are breaking between
     versions this function will migrate existing settings.
     """
-    debrid_provider = addon.getSetting('debrid_provider')
-    if debrid_provider != 'None':
-        addon.setSettingBool('debrid_enabled.' + debrid_provider, True)
-        addon.setSettingInt('debrid_priority.' + debrid_provider, 99)
-        addon.setSetting('debrid_provider', 'None')
+    pass
 
 
 def build_url(**kwargs):
