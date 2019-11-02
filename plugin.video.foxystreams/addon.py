@@ -348,9 +348,9 @@ def main():
                 user_debrid = user_debrids[i]
                 if cache:
                     if isinstance(user_debrid, debrid.RealDebrid):
-                        fn_filter = cache
+                        _fn_filter = cache
                     media_url = user_debrid.resolve_url(magnet,
-                                                        fn_filter=fn_filter)
+                                                        fn_filter=_fn_filter)
                 else:
                     ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
         li = xbmcgui.ListItem(path=media_url)
