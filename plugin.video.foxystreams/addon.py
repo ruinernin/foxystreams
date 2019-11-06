@@ -307,11 +307,18 @@ def main():
             if names_magnets:
                 break
         else:
-            # Do something to say nothing found
+            # Do something to say nothing found TV specific
             pass
         fn_filter = episode_file_filter(season, episode)
+    # Save anything cachable for future runs (e.g. tokens, cookies, etc.)
+    write_json_cache(scraper.__class__.__name__,
+                     {attr: getattr(scraper, attr)
+                      for attr in scraper.cache_attrs})
 
     # Providing
+    if not names_magnets:
+        ui.notify('No results found')
+        return
     names, magnets = zip(*names_magnets)
     names = list(names)
     magnets = list(magnets)
@@ -370,10 +377,6 @@ def main():
                                        debrid=i))
                       for name, magnet, cache, i in uncached_names_magnets]
         ui.directory_view(addon_handle, names_urls, videos=True)
-
-    write_json_cache(scraper.__class__.__name__,
-                     {attr: getattr(scraper, attr)
-                      for attr in scraper.cache_attrs})
 
 
 if __name__ == '__main__':
