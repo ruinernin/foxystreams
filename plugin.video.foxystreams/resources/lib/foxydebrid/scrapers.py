@@ -90,7 +90,9 @@ class TorrentApi(Scraper):
         else:
             result = self.api_get(mode='list', category=category,
                                   ranked=ranked)
-        result = result.get('torrent_results', list())
+        result = result.get('torrent_results')
+        if not result:
+            return None
         return ((t['filename'], t['download']) for t in result)
 
 
@@ -107,7 +109,6 @@ class BitLord(Scraper):
                     ('filters[adult]', False),
                     ('filters[risky]', False),)
     default_headers = (('X-Request-Token', None),)
-    cache_attrs = ('token', 'cookies')
 
     def __init__(self, token=None, cookies=None, ratelimit=0.5):
         super(BitLord, self).__init__(ratelimit=ratelimit)
@@ -160,7 +161,9 @@ class BitLord(Scraper):
             results = self.api_post(query=query)
         else:
             results = self.api_post()
-        results = results.get('content', list())
+        results = results.get('content')
+        if not results:
+            return None
         return self.filter_ascii_only(
             ((t['name'], t['magnet']) for t in results
              if t['seeds'] > 0))

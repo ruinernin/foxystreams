@@ -217,8 +217,9 @@ def main():
     selected_scraper = args.get('scraper') or addon.getSetting('scraper')
     cached_settings = get_json_cache(selected_scraper)
     scraper = getattr(scrapers, selected_scraper)()
-    for attr, value in cached_settings.iteritems():
-        setattr(scraper, attr, value)
+    for attr in scraper.cache_attrs:
+        if attr in cached_settings:
+            setattr(scraper, attr, cached_settings[attr])
     if isinstance(scraper, scrapers.TorrentApi):
         find_magnets = functools.partial(scraper.find_magnets,
                                          **user_torrentapi_settings())
