@@ -276,7 +276,7 @@ def main():
             if cached:
                 # Premiumize DL list is direct link
                 if not isinstance(user_debrid, debrid.Premiumize):
-                    url = build_url(mode='vid', link=url)
+                    url = build_url(mode='vid', link=url, debrid=0)
                 downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
             else:
                 downloading.append(('[COLOR red]'+name+'[/COLOR]',
