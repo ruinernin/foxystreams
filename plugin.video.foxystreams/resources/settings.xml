@@ -15,6 +15,10 @@
         <setting type="number" id="debrid_priority.Premiumize" label="Priority" default="100"/>
         <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
     </category>
+    <category label="AllDebrid">
+        <setting type="bool" id="debrid_enabled.AllDebrid" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.AllDebrid" label="Priority" default="100"/>
+    </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
         <setting type="bool" id="4kx265hdr" label="4k HDR x265" default="true"/>
@@ -34,5 +38,6 @@
         <setting type="text" id="RealDebrid.client_id" label="RealDebrid.clientid" />
         <setting type="text" id="RealDebrid.client_secret" label="RealDebrid.client_secret" />
         <setting type="text" id="RealDebrid.expires" label="RealDebrid.expires" />
+        <setting type="text" id="AllDebrid.api_key" label="AllDebrid.api_key" />
     </category>
 </settings>

@@ -117,7 +117,8 @@ def get_debrid_priority(debrid_name):
 
 def get_user_debrid_providers():
     providers = ['RealDebrid',
-                 'Premiumize',]
+                 'Premiumize',
+                 'AllDebrid']
     user_providers = [provider for provider in providers
                       if addon.getSettingBool('debrid_enabled.' + provider)]
     return sorted(user_providers, key=get_debrid_priority)

@@ -346,6 +346,64 @@ class Premiumize(DebridProvider):
             results.append((cached, name, url))
         return results
 
+
+class AllDebrid(DebridProvider):
+
+    rest_url = 'https://api.alldebrid.com'
+
+    def __init__(self, api_key=None):
+        super(AllDebrid, self).__init__()
+        self.api_key = api_key
+        self.pin = None
+
+    def authenticate(self):
+        if self.api_key:
+            return None
+        if not self.pin:
+            self.pin = self.rest_api_get('/pin/get').json()
+            return self.pin['pin']
+        response = requests.get(self.pin['check_url']).json()
+        if not response.get('success'):
+            self.pin = None
+            return False
+        if not response['activated']:
+            frac = response['expires_in'] / float(self.pin['expired_in'])
+            return int((1 - frac) * 100)
+        self.api_key = response['token']
+        return True
+
+    def auth_params(self):
+        return {
+            'token': self.api_key,
+            'agent': 'FoxyDebrid',
+        }
+
+    def check_availability(self, magnets, chunks=None, fn_filter=None):
+        hashes = [extract_hash(magnet) for magnet in magnets]
+        path = '/magnet/instant'
+        data = {'magnets[]': hashes}
+        result = self.rest_api_post(path, **data).json()
+        return [magnet['instant'] for magnet in result['data']]
+
+    def grab_torrent(self, magnet, fn_filter=None):
+        path = '/magnet/upload'
+        result = self.rest_api_get(path, magnet=magnet).json()
+        if result['success']:
+            return result['id']
+        return False
+
+    def resolve_url(self, magnet, fn_filter=None):
+        magnet_id = self.grab_torrent(magnet)
+        status = self.rest_api_get('/magnet/status', id=magnet_id).json()
+        # TODO Find movie files
+        link = [key for key, value in status['links'].items()
+                if value.endswith('.mp4')]
+        unlock = self.rest_api_get('/link/unlock', link=link).json()
+        url = unlock['infos']['link']
+        self.rest_api_get('/magnet/delete', id=magnet_id)
+        return url
+
+
 def extract_hash(magnet):
     """Returns sha1 hash from a magnet link."""
     query = urlparse.urlparse(magnet).query
