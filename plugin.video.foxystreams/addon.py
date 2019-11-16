@@ -358,6 +358,8 @@ def main():
                 if cache:
                     if isinstance(user_debrid, debrid.RealDebrid):
                         _fn_filter = cache
+                    else:
+                        _fn_filter = fn_filter
                     media_url = user_debrid.resolve_url(magnet,
                                                         fn_filter=_fn_filter)
                 else:
