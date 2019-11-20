@@ -336,7 +336,7 @@ class Premiumize(DebridProvider):
                 folder = self.rest_api_get(path,
                                            id=transfer['folder_id']).json()
                 content = folder['content']
-                content.sort(key=lambda x: int(x['size']))
+                content.sort(key=lambda x: int(x.get('size', 0)))
                 url = content[-1]['link']
                 name = transfer['name']
             else:
