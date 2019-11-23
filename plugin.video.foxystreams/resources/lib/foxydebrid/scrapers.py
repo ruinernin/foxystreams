@@ -92,7 +92,7 @@ class TorrentApi(Scraper):
                                   ranked=ranked)
         result = result.get('torrent_results')
         if not result:
-            return None
+            return []
         return ((t['filename'], t['download']) for t in result)
 
 
@@ -163,7 +163,7 @@ class BitLord(Scraper):
             results = self.api_post()
         results = results.get('content')
         if not results:
-            return None
+            return []
         return self.filter_ascii_only(
             ((t['name'], t['magnet']) for t in results
              if t['seeds'] > 0))
