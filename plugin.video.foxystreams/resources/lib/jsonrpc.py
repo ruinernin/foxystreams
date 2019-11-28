@@ -74,7 +74,7 @@ def get_movies(**field_value):
 
 def episode_library_id(showtitle, season, episode):
     """Returns library episodeid."""
-    shows = get_shows(title=showtitle)['tvshows']
+    shows = get_shows(title=showtitle).get('tvshows', list())
     if len(shows) != 1:
         return None
     tvshowid = shows[0]['tvshowid']
