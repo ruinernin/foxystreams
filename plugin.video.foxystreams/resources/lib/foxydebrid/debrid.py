@@ -261,7 +261,7 @@ class RealDebrid(DebridProvider):
                 continue
             else:
                 return False
-        file_id = self.get_fileid(info['files'])
+        file_id = self.get_fileid(info['files'], fn_filter)
         self.select_files(torrent_id, file_id)
         return True
 
