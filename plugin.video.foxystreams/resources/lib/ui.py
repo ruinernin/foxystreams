@@ -30,7 +30,7 @@ def directory_view(handle, names_urls, videos=False, folders=False, more=False):
                                      items=zip(urls, listitems, true_list))
     if more:
         return
-    xbmcplugin.endOfDirectory(handle=handle)
+    xbmcplugin.endOfDirectory(handle=handle, cacheToDisc=False)
 
 
 def dialog_select(names):
