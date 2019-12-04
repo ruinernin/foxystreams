@@ -380,7 +380,7 @@ def main():
         names_urls = [(name, build_url(mode='tor', magnet=magnet, cache=cache,
                                        debrid=i))
                       for name, magnet, cache, i in uncached_names_magnets]
-        ui.directory_view(addon_handle, names_urls, videos=True)
+        ui.directory_view(addon_handle, names_urls, videos=True, cache=True)
 
 
 if __name__ == '__main__':

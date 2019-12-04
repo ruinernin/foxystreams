@@ -21,7 +21,8 @@ def get_user_input(title='Search'):
     return xbmcgui.Dialog().input(title)
 
 
-def directory_view(handle, names_urls, videos=False, folders=False, more=False):
+def directory_view(handle, names_urls, videos=False, folders=False, more=False,
+                   cache=False):
     if names_urls:
         names, urls = zip(*names_urls)
         true_list = [folders] * len(names)
@@ -30,7 +31,7 @@ def directory_view(handle, names_urls, videos=False, folders=False, more=False):
                                      items=zip(urls, listitems, true_list))
     if more:
         return
-    xbmcplugin.endOfDirectory(handle=handle, cacheToDisc=False)
+    xbmcplugin.endOfDirectory(handle=handle, cacheToDisc=cache)
 
 
 def dialog_select(names):
