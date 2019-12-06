@@ -16,6 +16,7 @@ from resources.lib.player import FoxyPlayer
 
 
 rarbg_categories = {
+    'bd_remux': '46',
     '4kx265hdr': '52',
     '4kx265': '51',
     '4kx264': '50',

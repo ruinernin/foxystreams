@@ -21,6 +21,7 @@
     </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
+        <setting type="bool" id="bd_remux" label="BD Remux" default="false"/>
         <setting type="bool" id="4kx265hdr" label="4k HDR x265" default="false"/>
         <setting type="bool" id="4kx265" label="4k x265" default="false"/>
         <setting type="bool" id="4kx264" label="4k x264" default="false"/>
