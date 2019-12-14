@@ -5,20 +5,6 @@
         <setting type="select" id="scraper" label="Scraper" values="TorrentApi|BitLord" default="TorrentApi"/>
         <setting type="bool" id="show_cached_only" label="Show Debrid Cached Items Only" default="false"/>
     </category>
-    <category label="RealDebrid">
-        <setting type="bool" id="debrid_enabled.RealDebrid" label="Enable" default="false"/>
-        <setting type="number" id="debrid_priority.RealDebrid" label="Priority" default="100"/>
-        <setting type="action" label="Reset RealDebrid auth" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth&provider=RealDebrid)"/>
-    </category>
-    <category label="Premiumize">
-        <setting type="bool" id="debrid_enabled.Premiumize" label="Enable" default="false"/>
-        <setting type="number" id="debrid_priority.Premiumize" label="Priority" default="100"/>
-        <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
-    </category>
-    <category label="AllDebrid">
-        <setting type="bool" id="debrid_enabled.AllDebrid" label="Enable" default="false"/>
-        <setting type="number" id="debrid_priority.AllDebrid" label="Priority" default="100"/>
-    </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
         <setting type="bool" id="bd_remux" label="BD Remux" default="false"/>
@@ -32,6 +18,20 @@
         <setting type="bool" id="tvhd" label="TV HD" default="true"/>
         <setting type="bool" id="tvsd" label="TV SD" default="false"/>
         <setting type="bool" id="XXX" label="XXX" default="false"/>
+    </category>
+    <category label="RealDebrid">
+        <setting type="bool" id="debrid_enabled.RealDebrid" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.RealDebrid" label="Priority" default="100"/>
+        <setting type="action" label="Reset RealDebrid auth" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth&provider=RealDebrid)"/>
+    </category>
+    <category label="Premiumize">
+        <setting type="bool" id="debrid_enabled.Premiumize" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.Premiumize" label="Priority" default="100"/>
+        <setting type="text" id="Premiumize.api_key" label="Premiumize API Key" />
+    </category>
+    <category label="AllDebrid">
+        <setting type="bool" id="debrid_enabled.AllDebrid" label="Enable" default="false"/>
+        <setting type="number" id="debrid_priority.AllDebrid" label="Priority" default="100"/>
     </category>
     <category label="BTS">
         <setting type="text" id="RealDebrid.api_key" label="RealDebrid.api_key" />
