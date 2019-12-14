@@ -202,7 +202,7 @@ def debrid_downloads():
         if cached:
             # Premiumize DL list is direct link
             if not isinstance(user_debrid, debrid.Premiumize):
-                url = router.build_url(debrid_resolve, link=url, debrid=0)
+                url = router.build_url(debrid_resolve, link=url, _debrid=0)
             downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
         else:
             downloading.append(('[COLOR red]'+name+'[/COLOR]', ''))
@@ -211,8 +211,8 @@ def debrid_downloads():
 
 
 @router.route('/debrid/play')
-def debrid_resolve(debrid=None, link=None, cache=None, magnet=None):
-    user_debrid = user_debrids[int(debrid)]
+def debrid_resolve(_debrid=None, link=None, cache=None, magnet=None):
+    user_debrid = user_debrids[int(_debrid)]
     if link:
         url = user_debrid.unrestrict(link)
     else:
@@ -361,7 +361,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         names_urls = [(name, router.build_url(debrid_resolve,
                                               magnet=magnet,
                                               cache=cache,
-                                              debrid=i))
+                                              _debrid=i))
                       for name, magnet, cache, i in cached_names_magnets]
         ui.directory_view(router.handle, names_urls, videos=True, more=True)
         names_urls = [(name, router.build_url(get_torrent, magnet=magnet))
