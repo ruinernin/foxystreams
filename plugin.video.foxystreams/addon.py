@@ -6,13 +6,14 @@ import urlparse
 import sys
 
 import xbmc
-import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
 from resources.lib.foxydebrid import debrid, scrapers
 from resources.lib import ui
 from resources.lib.player import FoxyPlayer
+from resources.lib.router import router
+
 
 
 rarbg_categories = {
@@ -30,11 +31,8 @@ rarbg_categories = {
 }
 
 
-base_url = sys.argv[0]
-addon_handle = int(sys.argv[1])
-addon = xbmcaddon.Addon()
-if addon_handle > 0:
-    xbmcplugin.setContent(addon_handle, 'videos')
+if router.handle > 0:
+    xbmcplugin.setContent(router.handle, 'videos')
 
 
 def migrate_config():
@@ -44,10 +42,6 @@ def migrate_config():
     versions this function will migrate existing settings.
     """
     pass
-
-
-def build_url(**kwargs):
-    return base_url + '?' + urllib.urlencode(kwargs)
 
 
 def authenticate(user_debrid):
@@ -113,7 +107,7 @@ def get_debrid_priority(debrid_name):
     shifted 5 decimal places. We assume this is unique enough.
     """
     unique = sum(map(ord, debrid_name)) / (10.0 ** 5)
-    return addon.getSettingInt('debrid_priority.' + debrid_name) + unique
+    return router.addon.getSettingInt('debrid_priority.' + debrid_name) + unique
 
 
 def get_user_debrid_providers():
@@ -121,7 +115,8 @@ def get_user_debrid_providers():
                  'Premiumize',
                  'AllDebrid']
     user_providers = [provider for provider in providers
-                      if addon.getSettingBool('debrid_enabled.' + provider)]
+                      if router.addon.getSettingBool(
+                             'debrid_enabled.' + provider)]
     return sorted(user_providers, key=get_debrid_priority)
 
 
@@ -133,7 +128,7 @@ def get_debrid_provider(provider_name):
     args = args[1:] # Strip self
     config_argvals = []
     for arg in args:
-        config_setting = addon.getSetting(cfg_str.format(arg))
+        config_setting = router.addon.getSetting(cfg_str.format(arg))
         if config_setting == 'None':
             config_setting = None
         config_argvals.append(config_setting)
@@ -149,16 +144,17 @@ def save_debrid_settings(provider):
     args, _, _, _ = inspect.getargspec(provider.__init__)
     args = args[1:] # Strip self
     for arg in args:
-        addon.setSetting(cfg_str.format(arg), str(getattr(provider, arg, '')))
+        router.addon.setSetting(cfg_str.format(arg),
+                                str(getattr(provider, arg, '')))
 
 
 def user_torrentapi_settings():
     cats = []
     for name, cat_id in rarbg_categories.iteritems():
-        if addon.getSettingBool(name):
+        if router.addon.getSettingBool(name):
             cats.append(cat_id)
     category = ';'.join(cats)
-    ranked = int(addon.getSettingBool('search_ranked'))
+    ranked = int(router.addon.getSettingBool('search_ranked'))
     return {
         'category': category,
         'ranked': ranked,
@@ -166,7 +162,7 @@ def user_torrentapi_settings():
 
 
 def get_json_cache(name):
-    addon_id = addon.getAddonInfo('id')
+    addon_id = router.addon.getAddonInfo('id')
     path = 'special://temp/{_id}.{name}.json'.format(_id=addon_id, name=name)
     path = xbmc.translatePath(path)
     try:
@@ -181,7 +177,7 @@ def get_json_cache(name):
 
 
 def write_json_cache(name, cache):
-    addon_id = addon.getAddonInfo('id')
+    addon_id = router.addon.getAddonInfo('id')
     path = 'special://temp/{_id}.{name}.json'.format(_id=addon_id, name=name)
     path = xbmc.translatePath(path)
     try:
@@ -191,32 +187,59 @@ def write_json_cache(name, cache):
         raise
 
 
-def main():
-    """Business logic. `movie` and `tv` are from external plugins."""
-    migrate_config()
-    # Set up provider
-    args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
-    mode = args.get('mode', None)
-    user_enabled_debrids = get_user_debrid_providers()
-    user_debrids = []
-    for provider in user_enabled_debrids:
-        user_debrid = get_debrid_provider(provider)
-        if authenticate(user_debrid):
-            save_debrid_settings(user_debrid)
-            user_debrids.append(user_debrid)
-        else:
-            ui.notify(provider + " not active")
-    if not user_debrids:
-        ui.notify("No Debrid service active")
+@router.route('/history/delete')
+def delhistory():
+    write_json_cache('searches', dict())
 
-    # Clears Debrid provider settings
-    if mode == 'reset_auth':
-        user_debrid = getattr(user_debrid, args['provider'])()
-        save_debrid_settings(user_debrid)
-        return
+
+@router.route('/downloads')
+def debrid_downloads():
+    user_debrid = user_debrids[0]
+    torrents = user_debrid.downloads()
+    downloading = []
+    downloaded = []
+    for cached, name, url in torrents:
+        if cached:
+            # Premiumize DL list is direct link
+            if not isinstance(user_debrid, debrid.Premiumize):
+                url = router.build_url(debrid_resolve, link=url, debrid=0)
+            downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
+        else:
+            downloading.append(('[COLOR red]'+name+'[/COLOR]', ''))
+    ui.directory_view(router.handle, downloading, more=True)
+    ui.directory_view(router.handle, downloaded, videos=True)
+
+
+@router.route('/debrid/play')
+def debrid_resolve(debrid=None, link=None, cache=None, magnet=None):
+    user_debrid = user_debrids[int(debrid)]
+    if link:
+        url = user_debrid.unrestrict(link)
+    else:
+        if isinstance(user_debrid, debrid.RealDebrid):
+            fn_filter = cache
+        else:
+            fn_filter = None
+        url = user_debrid.resolve_url(magnet, fn_filter)
+    xbmcplugin.setResolvedUrl(router.handle,
+                              True,
+                              xbmcgui.ListItem(path=url))
+
+
+@router.route('/torrent/add')
+def get_torrent(magnet=None):
+    ui.add_torrent(user_debrids[0], magnet)
+
+
+@router.route('/')
+def root(mode=None, scraper=None, query=None, season=None, episode=None,
+         **kwargs):
+    """Business logic. `movie` and `tv` are from external plugins."""
+
+    args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
 
     # Set up scraper
-    selected_scraper = args.get('scraper') or addon.getSetting('scraper')
+    selected_scraper = scraper or router.addon.getSetting('scraper')
     cached_settings = get_json_cache(selected_scraper)
     scraper = getattr(scrapers, selected_scraper)()
     for attr in scraper.cache_attrs:
@@ -233,64 +256,25 @@ def main():
     if mode is None:
         names_urls = []
         names_urls.append(('Downloads',
-                           build_url(mode='downloads')))
+                           router.build_url(debrid_downloads)))
         names_urls.append(('List',
-                           build_url(mode='list')))
+                           router.build_url(root, mode='list')))
         names_urls.append(('Search',
-                           build_url(mode='search')))
+                           router.build_url(root, mode='search')))
         names_urls.append(('Search History (Select to clear)',
-                           build_url(mode='delhistory')))
+                           router.build_url(delhistory)))
         for search in searches:
             names_urls.append((search,
-                               build_url(mode='search', query=search)))
-        ui.directory_view(addon_handle, names_urls, folders=True)
-        return
-
-    if mode == 'vid':
-        user_debrid = user_debrids[int(args['debrid'])]
-        if args.get('link'):
-            url = user_debrid.unrestrict(args['link'])
-        else:
-            if isinstance(user_debrid, debrid.RealDebrid):
-                fn_filter = args['cache']
-            else:
-                fn_filter = None
-            url = user_debrid.resolve_url(args['magnet'], fn_filter)
-        li = xbmcgui.ListItem(path=url)
-        xbmcplugin.setResolvedUrl(addon_handle, True, li)
-        return
-
-    elif mode == 'tor':
-        ui.add_torrent(user_debrids[0], args['magnet'])
-        return
-
-    if mode == 'delhistory':
-        write_json_cache('searches', dict())
-        return
-
-    # Show Debrid downloads as directory
-    if mode == 'downloads':
-        user_debrid = user_debrids[0]
-        torrents = user_debrid.downloads()
-        downloading = []
-        downloaded = []
-        for cached, name, url in torrents:
-            if cached:
-                # Premiumize DL list is direct link
-                if not isinstance(user_debrid, debrid.Premiumize):
-                    url = build_url(mode='vid', link=url, debrid=0)
-                downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
-            else:
-                downloading.append(('[COLOR red]'+name+'[/COLOR]',
-                                    build_url(mode='noop')))
-        ui.directory_view(addon_handle, downloading, more=True)
-        ui.directory_view(addon_handle, downloaded, videos=True)
+                               router.build_url(root,
+                                                mode='search',
+                                                query=search)))
+        ui.directory_view(router.handle, names_urls, folders=True)
         return
 
     # Scraping
     fn_filter = None
     if mode == 'search':
-        query = args.get('query') or ui.get_user_input()
+        query = query or ui.get_user_input()
         names_magnets = find_magnets(query=query)
         try:
             searches.remove(query)
@@ -303,8 +287,8 @@ def main():
     if mode == 'movie':
         names_magnets = find_magnets(movie=True, **args)
     if mode == 'tv':
-        season = int(args['season'])
-        episode = int(args['episode'])
+        season = int(season)
+        episode = int(episode)
         for query in episode_search_strings(season, episode):
             names_magnets = list(find_magnets(tv=True, query=query, **args))
             if names_magnets:
@@ -344,7 +328,7 @@ def main():
         else:
             uncached_names_magnets.append(('[COLOR red]'+name+'[/COLOR]',
                                            magnet, cache, 0))
-    if addon.getSettingBool('show_cached_only'):
+    if router.addon.getSettingBool('show_cached_only'):
         uncached_names_magnets = []
 
     # Display results
@@ -370,19 +354,32 @@ def main():
         li.setInfo('video', metadata['info'])
         li.setArt(metadata['art'])
         player = FoxyPlayer()
-        xbmcplugin.setResolvedUrl(addon_handle, bool(media_url), li)
+        xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
         if media_url:
             player.run()
     if mode in ['list', 'search']:
-        names_urls = [(name, build_url(mode='vid', magnet=magnet, cache=cache,
-                                       debrid=i))
+        names_urls = [(name, router.build_url(debrid_resolve,
+                                              magnet=magnet,
+                                              cache=cache,
+                                              debrid=i))
                       for name, magnet, cache, i in cached_names_magnets]
-        ui.directory_view(addon_handle, names_urls, videos=True, more=True)
-        names_urls = [(name, build_url(mode='tor', magnet=magnet, cache=cache,
-                                       debrid=i))
+        ui.directory_view(router.handle, names_urls, videos=True, more=True)
+        names_urls = [(name, router.build_url(get_torrent, magnet=magnet))
                       for name, magnet, cache, i in uncached_names_magnets]
-        ui.directory_view(addon_handle, names_urls, videos=True, cache=True)
+        ui.directory_view(router.handle, names_urls, videos=True, cache=True)
 
 
 if __name__ == '__main__':
-    main()
+    migrate_config()
+    global user_debrids
+    user_debrids = []
+    for provider in get_user_debrid_providers():
+        user_debrid = get_debrid_provider(provider)
+        if authenticate(user_debrid):
+            save_debrid_settings(user_debrid)
+            user_debrids.append(user_debrid)
+        else:
+            ui.notify(provider + " not active")
+    if not user_debrids:
+        ui.notify("No Debrid service active")
+    router.run()
