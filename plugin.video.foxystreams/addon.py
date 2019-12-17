@@ -341,7 +341,10 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         all_names_magnets = cached_names_magnets + uncached_names_magnets
         media_url = ''
         if all_names_magnets:
-            selected = ui.dialog_select(zip(*all_names_magnets)[0])
+            if router.addon.getSettingBool('auto_select'):
+                selected = 0
+            else:
+                selected = ui.dialog_select(zip(*all_names_magnets)[0])
             if selected >= 0:
                 _, magnet, cache, i = all_names_magnets[selected]
                 user_debrid = user_debrids[i]

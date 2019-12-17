@@ -4,6 +4,7 @@
         <setting visible="false" type="select" id="debrid_provider" label="Debrid Provider" values="RealDebrid|Premiumize|None" defualt="None"/>
         <setting type="select" id="scraper" label="Scraper" values="TorrentApi|BitLord" default="TorrentApi"/>
         <setting type="bool" id="show_cached_only" label="Show Debrid Cached Items Only" default="false"/>
+        <setting type="bool" id="auto_select" label="Automatically select the first item in a scrape (no selection)" default="false"/>
     </category>
     <category label="Search categories">
         <setting type="bool" id="search_ranked" label="Scene Releases Only" default="true"/>
