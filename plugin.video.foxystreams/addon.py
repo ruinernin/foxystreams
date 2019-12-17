@@ -231,9 +231,14 @@ def get_torrent(magnet=None):
     ui.add_torrent(user_debrids[0], magnet)
 
 
+@router.route('/play/movie')
+def play_movie(**kwargs):
+    root(metadata=False, mode='movie', **kwargs)
+
+
 @router.route('/')
 def root(mode=None, scraper=None, query=None, season=None, episode=None,
-         **kwargs):
+         metadata=True, **kwargs):
     """Business logic. `movie` and `tv` are from external plugins."""
 
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
@@ -350,12 +355,13 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                 else:
                     ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
         li = xbmcgui.ListItem(path=media_url)
-        metadata = ui.metadata_from(args)
-        li.setInfo('video', metadata['info'])
-        li.setArt(metadata['art'])
-        player = FoxyPlayer()
+        if metadata:
+            mdata = ui.metadata_from(args)
+            li.setInfo('video', mdata['info'])
+            li.setArt(mdata['art'])
+            player = FoxyPlayer()
         xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
-        if media_url:
+        if media_url and metadata:
             player.run()
     if mode in ['list', 'search']:
         names_urls = [(name, router.build_url(debrid_resolve,
