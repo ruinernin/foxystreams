@@ -2,10 +2,11 @@ FoxyStreams
 ===========
 This plugin is an attempt to fill the gap of being [fast, light and easily
 forkable][Reasoning]. It is not particularly useful on it's own and is intended
-to be invoked by an external caller, such as [OpenMeta][]. What follows is
-general documentation. A [Quickstart][] bootstrap guide is available.
+to be invoked by an external caller, such as [FoxyMeta][] or [OpenMeta][]. What
+follows is general documentation. A [Quickstart][] bootstrap guide is available.
 
 [Reasoning]: https://github.com/ruinernin/foxystreams/wiki/Reasoning
+[FoxyMeta]: https://github.com/ruinernin/foxymeta
 [OpenMeta]: https://github.com/a4k-openproject/plugin.video.openmeta/
 [Quickstart]: https://github.com/ruinernin/foxystreams/wiki/Quickstart-Guide
 
@@ -26,10 +27,12 @@ Config
 General
 -------
 ### Debrid Provider
-After install choose a Debrid provider from settings.
+After install choose Debrid providers to enable from settings. Lower values for
+priority setting means a higher priority. Uncached items are added to the
+highest (lowest numerical setting) priority debrid provider.
 
 #### RealDebrid
-Simply choose RealDebrid and the OAuth device code to enter on
+Enable RealDebrid and the OAuth device code to enter on
 https://real-debrid.com/device will appear on the launch.
 
 #### Premiumize
@@ -38,10 +41,6 @@ Select Premiumize as the provider and enter a valid API Key.
 ### Scraper
 It is recommended to leave this as 'TorrentApi' by default and use 'BitLord' as
 a backup via an external player.
-
-### Reset auth
-This will clear any saved login details for the current provider. _(Note: this
-means the currently saved provider, not selected)_
 
 ### Show cached only
 Set this to only show cached items, removing the ability to add magnets to the
