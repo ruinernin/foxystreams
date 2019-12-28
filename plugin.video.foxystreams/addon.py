@@ -341,9 +341,24 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         all_names_magnets = cached_names_magnets + uncached_names_magnets
         media_url = ''
         if all_names_magnets:
-            if router.addon.getSettingBool('auto_select'):
-                selected = 0
-            else:
+            selected = None
+            if router.addon.getSettingBool('auto_select') and cached_names_magnets:
+                for idx, name in enumerate(zip(*cached_names_magnets)[0]):
+                    if '.hdr.' in name.lower():
+                        selected = idx
+                        break
+                    if '.2160p.' in name.lower():
+                        selected = idx
+                        break
+                    if '.1080p.' in name.lower():
+                        selected = idx
+                        break
+                    if '.720p.' in name.lower():
+                        selected = idx
+                        break
+                else:
+                    selected = 0
+            if selected is None:
                 selected = ui.dialog_select(zip(*all_names_magnets)[0])
             if selected >= 0:
                 _, magnet, cache, i = all_names_magnets[selected]
