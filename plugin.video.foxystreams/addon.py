@@ -236,6 +236,11 @@ def play_movie(**kwargs):
     root(metadata=False, mode='movie', **kwargs)
 
 
+@router.route('/play/episode')
+def play_episode(**kwargs):
+    root(metadata=False, mode='tv', **kwargs)
+
+
 @router.route('/')
 def root(mode=None, scraper=None, query=None, season=None, episode=None,
          metadata=True, **kwargs):

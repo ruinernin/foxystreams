@@ -106,8 +106,8 @@ class BitLord(Scraper):
                     ('filters[sort]', 'asc'),
                     ('filters[time]', 4),
                     ('filters[category]', 3),
-                    ('filters[adult]', False),
-                    ('filters[risky]', False),)
+                    ('filters[adult]', 'true'),
+                    ('filters[risky]', 'false'),)
     default_headers = (('X-Request-Token', None),)
 
     def __init__(self, token=None, cookies=None, ratelimit=0.5):
