@@ -31,7 +31,7 @@
     <category label="RealDebrid">
         <setting type="bool" id="debrid_enabled.RealDebrid" label="Enable" default="false"/>
         <setting type="number" id="debrid_priority.RealDebrid" label="Priority" default="100"/>
-        <setting type="action" label="Reset RealDebrid auth" action="RunPlugin(plugin://plugin.video.foxystreams?mode=reset_auth&provider=RealDebrid)"/>
+        <setting type="action" label="Reset RealDebrid auth" action="RunPlugin(plugin://plugin.video.foxystreams/reset_auth?provider=RealDebrid)"/>
     </category>
     <category label="Premiumize">
         <setting type="bool" id="debrid_enabled.Premiumize" label="Enable" default="false"/>

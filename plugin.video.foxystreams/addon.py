@@ -241,6 +241,12 @@ def play_episode(**kwargs):
     root(metadata=False, mode='tv', **kwargs)
 
 
+@router.route('/reset_auth')
+def reset_auth(provider=None):
+    debrid_provider = getattr(debrid, provider)()
+    save_debrid_settings(debrid_provider)
+
+
 @router.route('/')
 def root(mode=None, scraper=None, query=None, season=None, episode=None,
          metadata=True, **kwargs):
