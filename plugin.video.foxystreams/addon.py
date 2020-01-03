@@ -291,6 +291,8 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     fn_filter = None
     if mode == 'search':
         query = query or ui.get_user_input()
+        if not query:
+            return
         names_magnets = find_magnets(query=query)
         try:
             searches.remove(query)
