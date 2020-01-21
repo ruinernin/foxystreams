@@ -388,11 +388,10 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         li = xbmcgui.ListItem(path=media_url)
         if metadata:
             mdata = ui.metadata_from(args)
-            li.setInfo('video', mdata['info'])            
-            if mdata['info']['mediatype'] == 'movie':
-                li.setInfo('videos', {'mediatype' : 'movie'})
-            else:
-                li.setInfo('videos', {'mediatype' : 'episode'})            
+            li.setInfo('video', mdata['info'])
+            mediatype = mdata['info'].get('mediatype')
+            if mediatype:
+                li.setInfo('videos', {'mediatype': mediatype})
             li.setArt(mdata['art'])
             player = FoxyPlayer()
         xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
