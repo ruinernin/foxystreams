@@ -349,7 +349,7 @@ class Premiumize(DebridProvider):
 
 class AllDebrid(DebridProvider):
 
-    rest_url = 'https://api.alldebrid.com'
+    rest_url = 'https://api.alldebrid.com/v4'
 
     def __init__(self, api_key=None):
         super(AllDebrid, self).__init__()
