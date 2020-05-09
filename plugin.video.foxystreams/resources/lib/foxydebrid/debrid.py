@@ -232,7 +232,7 @@ class RealDebrid(DebridProvider):
         largest = max(files, key=lambda x: x['bytes'])
         return largest['id']
 
-    def check_availability(self, magnets, chunks=10, fn_filter=None):
+    def check_availability(self, magnets, chunks=50, fn_filter=None):
         hashes = [extract_hash(magnet) for magnet in magnets]
         all_results = {}
         for i in range(0, len(hashes), chunks):

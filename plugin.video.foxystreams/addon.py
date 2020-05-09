@@ -292,6 +292,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     if mode == 'search':
         query = query or ui.get_user_input()
         if not query:
+            router.fail()
             return
         names_magnets = find_magnets(query=query)
         try:
@@ -323,6 +324,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     # Providing
     if not names_magnets:
         ui.notify('No results found')
+        router.fail()
         return
     names, magnets = zip(*names_magnets)
     names = list(names)
@@ -410,10 +412,8 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         ui.directory_view(router.handle, names_urls, videos=True, cache=True)
 
 
-if __name__ == '__main__':
-    migrate_config()
-    global user_debrids
-    user_debrids = []
+user_debrids = []
+def run(url, handle, qs):
     for provider in get_user_debrid_providers():
         user_debrid = get_debrid_provider(provider)
         if authenticate(user_debrid):
@@ -423,4 +423,4 @@ if __name__ == '__main__':
             ui.notify(provider + " not active")
     if not user_debrids:
         ui.notify("No Debrid service active")
-    router.run()
+    router.run(url, qs)

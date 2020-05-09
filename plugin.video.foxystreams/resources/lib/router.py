@@ -20,6 +20,7 @@ import sys
 
 import xbmc
 import xbmcaddon
+import xbmcplugin
 
 
 
@@ -39,7 +40,7 @@ class Router(object):
         self.paths = {}
         self.addon = xbmcaddon.Addon()
         self.id_ = self.addon.getAddonInfo('id')
-        self.handle = int(ADDON_HANDLE)
+        self.handle = int(sys.argv[1])
         self.cache_dir = xbmc.translatePath(
             'special://temp/{}'.format(self.id_))
         try:
@@ -135,9 +136,9 @@ class Router(object):
             return func
         return wrapper
 
-    def run(self):
+    def run(self, url, qs):
         """Main run method to be called on execution."""
-        full_path = ADDON_URL + ADDON_QS
+        full_path = url + qs
         parsed = urlparse(full_path)
         path = parsed.path.lstrip('/')
         kwargs = dict(parse_qsl(parsed.query))
@@ -156,6 +157,9 @@ class Router(object):
             query = urlencode(kwargs)
             url += '?' + query
         return url
+
+    def fail(self):
+        xbmcplugin.endOfDirectory(self.handle, False)
 
 
 router = Router()
