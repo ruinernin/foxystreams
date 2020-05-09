@@ -1,5 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
+<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.32">
+    <requires>
+        <import addon="xbmc.python" version="2.25.0" />
+        <import addon="script.module.requests" version="2.22.0" />
+    </requires>
+    <extension library="addon.py" point="xbmc.python.pluginsource">
+        <provides>video</provides>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
