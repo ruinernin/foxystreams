@@ -327,16 +327,17 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     names, magnets = zip(*names_magnets)
     names = list(names)
     magnets = list(magnets)
-    cached = [False] * len(magnets)
+    cached = [(False, False)] * len(magnets)
     for debrid_idx, user_debrid in enumerate(user_debrids):
         to_check = [(idx, magnets[idx]) for idx, cache in enumerate(cached)
-                    if not cache]
+                    if not cache[1]]
         if not to_check:
             break
         caches = user_debrid.check_availability(zip(*to_check)[1],
                                                 fn_filter=fn_filter)
         for (idx, _), cache in zip(to_check, caches):
-            cached[idx] = (debrid_idx, cache)
+            if cache:
+                cached[idx] = (debrid_idx, cache)
     cached_names_magnets = []
     uncached_names_magnets = []
     for name, magnet, (debrid_idx, cache) in zip(names, magnets, cached):
