@@ -8,3 +8,7 @@
         <provides>video</provides>
     </extension>
 </addon>
+tension point="xbmc.addon.metadata">
+        <reuselanguageinvoker>true</reuselanguageinvoker>
+    </extension>
+</addon>
