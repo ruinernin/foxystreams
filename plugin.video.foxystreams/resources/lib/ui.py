@@ -44,11 +44,13 @@ def notify(message):
 
 
 def add_torrent(user_debrid, magnet, fn_filter=None):
+    dialog = xbmcgui.DialogProgressBG()
+    dialog.create('Adding To Debrid')
     status = user_debrid.grab_torrent(magnet, fn_filter=fn_filter)
+    dialog.close()
     if status:
         notify('Added Torrent to Debrid')
     else:
-        xbmc.executebuiltin('Notification(FoxyStreams, FAILED)')
         notify('Failed to add to Debrid')
 
 

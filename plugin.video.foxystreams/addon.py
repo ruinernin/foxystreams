@@ -190,6 +190,7 @@ def write_json_cache(name, cache):
 @router.route('/history/delete')
 def delhistory():
     write_json_cache('searches', dict())
+    xbmc.executebuiltin('Container.Refresh()')
 
 
 @router.route('/downloads')
@@ -275,10 +276,14 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                            router.build_url(debrid_downloads)))
         names_urls.append(('List',
                            router.build_url(root, mode='list')))
+        ui.directory_view(router.handle, names_urls, folders=True, more=True)
+        names_urls = []
         names_urls.append(('Search',
                            router.build_url(root, mode='search')))
         names_urls.append(('Search History (Select to clear)',
                            router.build_url(delhistory)))
+        ui.directory_view(router.handle, names_urls, folders=False, more=True)
+        names_urls = []
         for search in searches:
             names_urls.append((search,
                                router.build_url(root,
@@ -290,9 +295,12 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     # Scraping
     fn_filter = None
     if mode == 'search':
-        query = query or ui.get_user_input()
         if not query:
-            router.fail()
+            query = ui.get_user_input()
+            if not query:
+                return
+            url = router.build_url(root, mode='search', query=query)
+            xbmc.executebuiltin('Container.Update({})'.format(url))
             return
         names_magnets = find_magnets(query=query)
         try:
@@ -409,11 +417,13 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         ui.directory_view(router.handle, names_urls, videos=True, more=True)
         names_urls = [(name, router.build_url(get_torrent, magnet=magnet))
                       for name, magnet, cache, i in uncached_names_magnets]
-        ui.directory_view(router.handle, names_urls, videos=True, cache=True)
+        ui.directory_view(router.handle, names_urls)
 
 
 user_debrids = []
 def run(url, handle, qs):
+    global user_debrids
+    user_debrids = []
     for provider in get_user_debrid_providers():
         user_debrid = get_debrid_provider(provider)
         if authenticate(user_debrid):
@@ -423,4 +433,4 @@ def run(url, handle, qs):
             ui.notify(provider + " not active")
     if not user_debrids:
         ui.notify("No Debrid service active")
-    router.run(url, qs)
+    router.run(url, handle, qs)

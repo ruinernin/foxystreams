@@ -23,10 +23,6 @@ import xbmcaddon
 import xbmcplugin
 
 
-
-ADDON_URL, ADDON_HANDLE, ADDON_QS = sys.argv[:3]
-
-
 class Router(object):
     """Router class intended to be used as a singleton.
 
@@ -136,8 +132,9 @@ class Router(object):
             return func
         return wrapper
 
-    def run(self, url, qs):
+    def run(self, url, handle, qs):
         """Main run method to be called on execution."""
+        self.handle = int(handle)
         full_path = url + qs
         parsed = urlparse(full_path)
         path = parsed.path.lstrip('/')
