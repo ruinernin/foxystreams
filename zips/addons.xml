@@ -1,5 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.0">
+<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
+    <requires>
+        <import addon="xbmc.python" version="2.25.0" />
+        <import addon="script.module.requests" version="2.22.0" />
+    </requires>
+    <extension library="addon.py" point="xbmc.python.pluginsource">
+        <provides>video</provides>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.0">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -10,14 +18,6 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
-    <requires>
-        <import addon="xbmc.python" version="2.25.0" />
-        <import addon="script.module.requests" version="2.22.0" />
-    </requires>
-    <extension library="addon.py" point="xbmc.python.pluginsource">
-        <provides>video</provides>
-    </extension>
 </addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.32">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
@@ -25,5 +25,16 @@
     </requires>
     <extension library="addon.py" point="xbmc.python.pluginsource">
         <provides>video</provides>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.1">
+    <requires>
+        <import addon="xbmc.python" version="2.25.0" />
+        <import addon="script.module.requests" version="2.22.0" />
+    </requires>
+    <extension library="launcher.py" point="xbmc.python.pluginsource">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
 </addon></addons>
