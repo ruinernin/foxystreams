@@ -406,6 +406,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
             li.setArt(mdata['art'])
             player = FoxyPlayer()
         xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
+        xbmcgui.Window(10000).setProperty('foxymeta.nativeplay', 'True')
         if media_url and metadata:
             player.run()
     if mode in ['list', 'search']:
