@@ -1,3 +1,5 @@
+from .router import router
+
 import xbmc
 import xbmcgui
 import xbmcplugin
@@ -21,17 +23,16 @@ def get_user_input(title='Search'):
     return xbmcgui.Dialog().input(title)
 
 
-def directory_view(handle, names_urls, videos=False, folders=False, more=False,
-                   cache=False):
+def directory_view(names_urls, videos=False, folders=False, more=False):
     if names_urls:
         names, urls = zip(*names_urls)
         true_list = [folders] * len(names)
         listitems = build_listitems(names, videos=videos)
-        xbmcplugin.addDirectoryItems(handle=handle,
+        xbmcplugin.addDirectoryItems(handle=router.handle,
                                      items=zip(urls, listitems, true_list))
     if more:
         return
-    xbmcplugin.endOfDirectory(handle=handle, cacheToDisc=cache)
+    xbmcplugin.endOfDirectory(handle=router.handle)
 
 
 def dialog_select(names):

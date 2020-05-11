@@ -207,8 +207,8 @@ def debrid_downloads():
             downloaded.append(('[COLOR green]'+name+'[/COLOR]', url))
         else:
             downloading.append(('[COLOR red]'+name+'[/COLOR]', ''))
-    ui.directory_view(router.handle, downloading, more=True)
-    ui.directory_view(router.handle, downloaded, videos=True)
+    ui.directory_view(downloading, more=True)
+    ui.directory_view(downloaded, videos=True)
 
 
 @router.route('/debrid/play')
@@ -276,20 +276,20 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                            router.build_url(debrid_downloads)))
         names_urls.append(('List',
                            router.build_url(root, mode='list')))
-        ui.directory_view(router.handle, names_urls, folders=True, more=True)
+        ui.directory_view(names_urls, folders=True, more=True)
         names_urls = []
         names_urls.append(('Search',
                            router.build_url(root, mode='search')))
         names_urls.append(('Search History (Select to clear)',
                            router.build_url(delhistory)))
-        ui.directory_view(router.handle, names_urls, folders=False, more=True)
+        ui.directory_view(names_urls, folders=False, more=True)
         names_urls = []
         for search in searches:
             names_urls.append((search,
                                router.build_url(root,
                                                 mode='search',
                                                 query=search)))
-        ui.directory_view(router.handle, names_urls, folders=True)
+        ui.directory_view(names_urls, folders=True)
         return
 
     # Scraping
@@ -415,10 +415,10 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                                               cache=cache,
                                               _debrid=i))
                       for name, magnet, cache, i in cached_names_magnets]
-        ui.directory_view(router.handle, names_urls, videos=True, more=True)
+        ui.directory_view(names_urls, videos=True, more=True)
         names_urls = [(name, router.build_url(get_torrent, magnet=magnet))
                       for name, magnet, cache, i in uncached_names_magnets]
-        ui.directory_view(router.handle, names_urls)
+        ui.directory_view(names_urls)
 
 
 user_debrids = []
