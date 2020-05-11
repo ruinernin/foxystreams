@@ -11,7 +11,6 @@ import xbmcplugin
 
 from resources.lib.foxydebrid import debrid, scrapers
 from resources.lib import ui
-from resources.lib.player import FoxyPlayer
 from resources.lib.router import router
 
 
@@ -234,12 +233,12 @@ def get_torrent(magnet=None):
 
 @router.route('/play/movie')
 def play_movie(**kwargs):
-    root(metadata=False, mode='movie', **kwargs)
+    root(mode='movie', **kwargs)
 
 
 @router.route('/play/episode')
 def play_episode(**kwargs):
-    root(metadata=False, mode='tv', **kwargs)
+    root(mode='tv', **kwargs)
 
 
 @router.route('/reset_auth')
@@ -250,7 +249,7 @@ def reset_auth(provider=None):
 
 @router.route('/')
 def root(mode=None, scraper=None, query=None, season=None, episode=None,
-         metadata=True, **kwargs):
+         **kwargs):
     """Business logic. `movie` and `tv` are from external plugins."""
 
     args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
@@ -397,18 +396,8 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                 else:
                     ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
         li = xbmcgui.ListItem(path=media_url)
-        if metadata:
-            mdata = ui.metadata_from(args)
-            li.setInfo('video', mdata['info'])
-            mediatype = mdata['info'].get('mediatype')
-            if mediatype:
-                li.setInfo('videos', {'mediatype': mediatype})
-            li.setArt(mdata['art'])
-            player = FoxyPlayer()
         xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
         xbmcgui.Window(10000).setProperty('foxymeta.nativeplay', 'True')
-        if media_url and metadata:
-            player.run()
     if mode in ['list', 'search']:
         names_urls = [(name, router.build_url(debrid_resolve,
                                               magnet=magnet,
