@@ -247,8 +247,6 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
          **kwargs):
     """Business logic. `movie` and `tv` are from external plugins."""
 
-    args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
-
     # Set up scraper
     selected_scraper = scraper or router.addon.getSetting('scraper')
     cached_settings = get_json_cache(selected_scraper)
@@ -306,12 +304,12 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
     if mode == 'list':
         names_magnets = find_magnets()
     if mode == 'movie':
-        names_magnets = find_magnets(movie=True, **args)
+        names_magnets = find_magnets(movie=True, **kwargs)
     if mode == 'tv':
         season = int(season)
         episode = int(episode)
         for query in episode_search_strings(season, episode):
-            names_magnets = list(find_magnets(tv=True, query=query, **args))
+            names_magnets = list(find_magnets(tv=True, query=query, **kwargs))
             if names_magnets:
                 break
         else:
