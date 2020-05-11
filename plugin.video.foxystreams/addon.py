@@ -1,7 +1,6 @@
 import functools
 import inspect
 import json
-import urllib
 import urlparse
 import sys
 
@@ -28,10 +27,6 @@ rarbg_categories = {
     'tvsd': '18',
     'XXX': '4',
 }
-
-
-if router.handle > 0:
-    xbmcplugin.setContent(router.handle, 'videos')
 
 
 def migrate_config():

@@ -30,6 +30,8 @@ def directory_view(names_urls, videos=False, folders=False, more=False):
         listitems = build_listitems(names, videos=videos)
         xbmcplugin.addDirectoryItems(handle=router.handle,
                                      items=zip(urls, listitems, true_list))
+    if videos:
+        xbmcplugin.setContent(router.handle, 'videos')
     if more:
         return
     xbmcplugin.endOfDirectory(handle=router.handle)
