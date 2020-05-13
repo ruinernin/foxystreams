@@ -23,11 +23,19 @@ def get_user_input(title='Search'):
     return xbmcgui.Dialog().input(title)
 
 
-def directory_view(names_urls, videos=False, folders=False, more=False):
+def directory_view(names_urls, contexts=False, videos=False, folders=False,
+                   more=False):
     if names_urls:
-        names, urls = zip(*names_urls)
+        if contexts:
+            names, urls, contexts = zip(*names_urls)
+        else:
+            names, urls = zip(*names_urls)
+            contexts = []
         true_list = [folders] * len(names)
         listitems = build_listitems(names, videos=videos)
+        for context in contexts:
+            for li in listitems:
+                li.addContextMenuItems(context)
         xbmcplugin.addDirectoryItems(handle=router.handle,
                                      items=zip(urls, listitems, true_list))
     if videos:

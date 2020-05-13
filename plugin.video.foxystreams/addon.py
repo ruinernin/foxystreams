@@ -392,12 +392,15 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         xbmcplugin.setResolvedUrl(router.handle, bool(media_url), li)
         xbmcgui.Window(10000).setProperty('foxymeta.nativeplay', 'True')
     if mode in ['list', 'search']:
-        names_urls = [(name, router.build_url(debrid_resolve,
-                                              magnet=magnet,
-                                              cache=cache,
-                                              _debrid=i))
+        names_urls = [(name,
+                       router.build_url(debrid_resolve,
+                                        magnet=magnet,
+                                        cache=cache,
+                                        _debrid=i),
+                       [('Add to cloud', 'RunPlugin({})'.format(
+                            router.build_url(get_torrent, magnet=magnet)))])
                       for name, magnet, cache, i in cached_names_magnets]
-        ui.directory_view(names_urls, videos=True, more=True)
+        ui.directory_view(names_urls, videos=True, more=True, contexts=True)
         names_urls = [(name, router.build_url(get_torrent, magnet=magnet))
                       for name, magnet, cache, i in uncached_names_magnets]
         ui.directory_view(names_urls)
