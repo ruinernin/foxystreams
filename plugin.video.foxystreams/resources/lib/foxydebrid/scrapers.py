@@ -58,7 +58,7 @@ class TorrentApi(Scraper):
     default_params = (('app_id', 'ruin'),
                       ('limit', 100),
                       ('token', None),)
-    cache_attrs = ('token',)
+    cache_attrs = ('token','_last_request')
 
     def __init__(self, token=None, ratelimit=0.5):
         super(TorrentApi, self).__init__(ratelimit=ratelimit)
@@ -75,6 +75,7 @@ class TorrentApi(Scraper):
 
     def find_magnets(self, query=None, tv=False, movie=False, **kwargs):
         """Returns iterable of tuples (name, magnet_uri)."""
+        attempt = int(kwargs.get('attempt', 1))
         ranked = int(kwargs.get('ranked', True))
         category = kwargs.get('category')
         if movie:
@@ -92,7 +93,11 @@ class TorrentApi(Scraper):
                                   ranked=ranked)
         result = result.get('torrent_results')
         if not result:
-            return []
+            if attempt >= 3:
+                return []
+            time.sleep(1 << attempt)
+            kwargs['attempt'] = attempt + 1
+            return self.find_magnets(query=query, tv=tv, movie=movie, **kwargs)
         return ((t['filename'], t['download']) for t in result)
 
 
