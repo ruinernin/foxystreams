@@ -281,7 +281,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                                router.build_url(root,
                                                 mode='search',
                                                 query=search)))
-        ui.directory_view(names_urls, folders=True)
+        ui.directory_view(names_urls, folders=True, cache=False)
         return
 
     # Scraping

@@ -24,7 +24,7 @@ def get_user_input(title='Search'):
 
 
 def directory_view(names_urls, contexts=False, videos=False, folders=False,
-                   more=False):
+                   more=False, cache=True):
     if names_urls:
         if contexts:
             names, urls, contexts = zip(*names_urls)
@@ -42,7 +42,7 @@ def directory_view(names_urls, contexts=False, videos=False, folders=False,
         xbmcplugin.setContent(router.handle, 'videos')
     if more:
         return
-    xbmcplugin.endOfDirectory(handle=router.handle)
+    xbmcplugin.endOfDirectory(handle=router.handle, cacheToDisc=cache)
 
 
 def dialog_select(names):
