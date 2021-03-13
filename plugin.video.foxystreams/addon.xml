@@ -1,5 +1,5 @@
 
-<addon id="plugin.video.foxystreams" name="FoxyStreams" version="0.2.8" provider-name="ruinernin">
+<addon id="plugin.video.foxystreams" name="FoxyStreams" version="CURRENT_VERSION" provider-name="ruinernin">
     <requires>
         <import addon="script.module.six" />
         <import addon="script.module.kodi-six" />
