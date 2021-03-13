@@ -36,7 +36,7 @@ def directory_view(names_urls, contexts=False, videos=False, folders=False,
         for li, context in zip(listitems, contexts):
             li.addContextMenuItems(context)
         xbmcplugin.addDirectoryItems(handle=router.handle,
-                                     items=zip(urls, listitems, true_list))
+                                     items=list(zip(urls, listitems, true_list)))
     if videos:
         xbmcplugin.setContent(router.handle, 'videos')
     if more:
