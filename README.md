@@ -6,20 +6,16 @@ to be invoked by an external caller, such as [FoxyMeta][] or [OpenMeta][]. What
 follows is general documentation. A [Quickstart][] bootstrap guide is available.
 
 [Reasoning]: https://github.com/ruinernin/foxystreams/wiki/Reasoning
-[FoxyMeta]: https://github.com/ruinernin/foxymeta
-[OpenMeta]: https://github.com/a4k-openproject/plugin.video.openmeta/
-[Quickstart]: https://github.com/ruinernin/foxystreams/wiki/Quickstart-Guide
-
 
 Installation
 ============
 Repo
 ----
 Add the repo below in the usual way via the _File Manager_ and install
-`repository.foxystreams-X.X.X.zip`. Do not use the `-dev` repo as it is almost
+`repository.nemoandcrush-X.X.X.zip`. Do not use the `-dev` repo as it is almost
 guaranteed to contain broken code.
 
-    https://ruinernin.github.io/kodi
+    https://nemoandcrush.github.io/repo/
 
 
 Config
