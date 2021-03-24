@@ -15,7 +15,6 @@ Add the repo below in the usual way via the _File Manager_ and install
 `repository.nemoandcrush-X.X.X.zip`. Do not use the `-dev` repo as it is almost
 guaranteed to contain broken code.
 
-    https://nemoandcrush.github.io/repo/
 
 
 Config
