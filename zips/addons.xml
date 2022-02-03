@@ -1,5 +1,21 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.2">
+<addons><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
+    <requires>
+        <import addon="xbmc.python" version="2.25.0" />
+        <import addon="script.module.requests" version="2.22.0" />
+    </requires>
+    <extension library="addon.py" point="xbmc.python.pluginsource">
+        <provides>video</provides>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.32">
+    <requires>
+        <import addon="xbmc.python" version="2.25.0" />
+        <import addon="script.module.requests" version="2.22.0" />
+    </requires>
+    <extension library="addon.py" point="xbmc.python.pluginsource">
+        <provides>video</provides>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.0">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -10,15 +26,18 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.31">
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.1">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
     </requires>
-    <extension library="addon.py" point="xbmc.python.pluginsource">
+    <extension library="launcher.py" point="xbmc.python.pluginsource">
         <provides>video</provides>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.0">
+    <extension point="xbmc.addon.metadata">
+        <reuselanguageinvoker>true</reuselanguageinvoker>
+    </extension>
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.2">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -40,7 +59,7 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.8">
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.4">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -51,7 +70,7 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.1">
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.5">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -84,15 +103,7 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.1.32">
-    <requires>
-        <import addon="xbmc.python" version="2.25.0" />
-        <import addon="script.module.requests" version="2.22.0" />
-    </requires>
-    <extension library="addon.py" point="xbmc.python.pluginsource">
-        <provides>video</provides>
-    </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.4">
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.8">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.requests" version="2.22.0" />
@@ -103,10 +114,10 @@
     <extension point="xbmc.addon.metadata">
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
-</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.2.5">
+</addon><addon id="plugin.video.foxystreams" name="FoxyStreams" provider-name="ruinernin" version="0.3.0">
     <requires>
-        <import addon="xbmc.python" version="2.25.0" />
-        <import addon="script.module.requests" version="2.22.0" />
+        <import addon="xbmc.python" version="3.0.0" />
+        <import addon="script.module.requests" version="2.25.1+matrix.1" />
     </requires>
     <extension library="launcher.py" point="xbmc.python.pluginsource">
         <provides>video</provides>
