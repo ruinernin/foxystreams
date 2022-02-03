@@ -51,7 +51,7 @@ class Router(object):
     def cache_hash(*args, **kwargs):
         h_list = list(args)
         h_list.extend(sorted(kwargs.items()))
-        return hashlib.md5(str(h_list)).hexdigest()
+        return hashlib.md5(bytes(str(h_list), 'utf8')).hexdigest()
 
     def memcache(self, func):
         cache = {}

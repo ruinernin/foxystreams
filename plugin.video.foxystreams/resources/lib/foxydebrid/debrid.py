@@ -206,7 +206,7 @@ class RealDebrid(DebridProvider):
             if len(varient) != 1:
                 return False
             if callable(fn_filter):
-                if not fn_filter(varient.values()[0]['filename']):
+                if not fn_filter(list(varient.values())[0]['filename']):
                     return False
             return True
         varients = [varient for varient in varients if varient_filter(varient)]
@@ -244,7 +244,7 @@ class RealDebrid(DebridProvider):
         for _hash in hashes:
             result = all_results.get(_hash)
             if result:
-                varients = result['rd']
+                varients = list(result['rd'])
                 result = self.get_cached_fileid(varients,
                                                 fn_filter=fn_filter)
             cached_fileids.append(result)
