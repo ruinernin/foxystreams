@@ -1,7 +1,6 @@
 import functools
 import inspect
 import json
-import urlparse
 import sys
 
 import xbmc
@@ -42,7 +41,7 @@ def authenticate(user_debrid):
     debrid_auth = user_debrid.authenticate()
     if debrid_auth in (True, None):
         return True
-    if isinstance(debrid_auth, basestring):
+    if isinstance(debrid_auth, str):
         interface = xbmcgui.DialogProgress()
         interface.create('Authenticate Debrid', debrid_auth)
         while True:
@@ -144,7 +143,7 @@ def save_debrid_settings(provider):
 
 def user_torrentapi_settings():
     cats = []
-    for name, cat_id in rarbg_categories.iteritems():
+    for name, cat_id in rarbg_categories.items():
         if router.addon.getSettingBool(name):
             cats.append(cat_id)
     category = ';'.join(cats)
@@ -167,7 +166,7 @@ def get_json_cache(name):
             cached_data = {}
         else:
             raise
-    return {k: v for k, v in cached_data.iteritems() if v}
+    return {k: v for k, v in cached_data.items() if v}
 
 
 def write_json_cache(name, cache):
@@ -335,7 +334,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                     if not cache[1]]
         if not to_check:
             break
-        caches = user_debrid.check_availability(zip(*to_check)[1],
+        caches = user_debrid.check_availability(list(zip(*to_check))[1],
                                                 fn_filter=fn_filter)
         for (idx, _), cache in zip(to_check, caches):
             if cache:
@@ -359,7 +358,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
         if all_names_magnets:
             selected = None
             if router.addon.getSettingBool('auto_select') and cached_names_magnets:
-                for idx, name in enumerate(zip(*cached_names_magnets)[0]):
+                for idx, name in enumerate(list(zip(*cached_names_magnets))[0]):
                     if '.hdr.' in name.lower():
                         selected = idx
                         break
@@ -375,7 +374,7 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                 else:
                     selected = 0
             if selected is None:
-                selected = ui.dialog_select(zip(*all_names_magnets)[0])
+                selected = ui.dialog_select(list(zip(*all_names_magnets))[0])
             if selected >= 0:
                 _, magnet, cache, i = all_names_magnets[selected]
                 user_debrid = user_debrids[i]
