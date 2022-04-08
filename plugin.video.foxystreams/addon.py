@@ -379,12 +379,14 @@ def root(mode=None, scraper=None, query=None, season=None, episode=None,
                 _, magnet, cache, i = all_names_magnets[selected]
                 user_debrid = user_debrids[i]
                 if cache:
+                    _fn_filter = fn_filter
                     if isinstance(user_debrid, debrid.RealDebrid):
-                        _fn_filter = cache
+                        media_url = user_debrid.resolve_url(magnet,
+                                                            fn_filter=_fn_filter,
+                                                            ids=cache)
                     else:
-                        _fn_filter = fn_filter
-                    media_url = user_debrid.resolve_url(magnet,
-                                                        fn_filter=_fn_filter)
+                        media_url = user_debrid.resolve_url(magnet,
+                                                            fn_filter=_fn_filter)
                 else:
                     ui.add_torrent(user_debrid, magnet, fn_filter=fn_filter)
         li = xbmcgui.ListItem(path=media_url)

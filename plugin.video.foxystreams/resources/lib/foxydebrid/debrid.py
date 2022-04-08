@@ -216,6 +216,22 @@ class RealDebrid(DebridProvider):
         return list(varient.keys())[0]
 
     @staticmethod
+    def get_cached_fileid2(varients, fn_filter=None):
+        def varient_filter(varient):
+            fnames = [i['filename'] for i in varient.values()]
+            if callable(fn_filter):
+                for fname in fnames:
+                    if callable(fn_filter):
+                        if fn_filter(fname):
+                            return True
+                return False
+            return True
+        varients = [varient for varient in varients if varient_filter(varient)]
+        if not varients:
+            return False
+        return list(varients[0].keys())
+
+    @staticmethod
     def get_fileid(files, fn_filter=None):
         """Returns a single file ID from the list of files.
 
@@ -245,8 +261,8 @@ class RealDebrid(DebridProvider):
             result = all_results.get(_hash)
             if result:
                 varients = list(result['rd'])
-                result = self.get_cached_fileid(varients,
-                                                fn_filter=fn_filter)
+                result = self.get_cached_fileid2(varients,
+                                                 fn_filter=fn_filter)
             cached_fileids.append(result)
         return cached_fileids
 
@@ -265,7 +281,7 @@ class RealDebrid(DebridProvider):
         self.select_files(torrent_id, file_id)
         return True
 
-    def resolve_url(self, magnet, fn_filter=None):
+    def resolve_url(self, magnet, fn_filter=None, ids=None):
         """Returns string of direct HTTP(S) URI for magenet.
 
         fn_filter differs from standard and should be a cached file_id.
@@ -273,8 +289,23 @@ class RealDebrid(DebridProvider):
         """
 
         _id = self.add_magnet(magnet)
-        self.select_files(_id, file_id=fn_filter)
-        link = self.torrent_info(_id)['links'][0]
+        self.select_files(_id, file_id=','.join(ids))
+        links = self.torrent_info(_id)['links']
+        if fn_filter:
+            for _link in links:
+                res = self.rest_api_post('/unrestrict/check', link=_link).json()
+                if fn_filter(res['filename']):
+                    link = _link
+        else:
+            largest = 0
+            if len(links) > 1:
+                for _link in links:
+                    res = self.rest_api_post('/unrestrict/check', link=_link).json()
+                    if res['filesize'] > largest:
+                        link = _link
+                        largest = res['filesize']
+            else:
+                link = links[0]
         url = self.unrestrict(link)
         self.delete_torrent(_id)
         return url
